@@ -30,6 +30,16 @@ necessary plugins and then creating PDFs from the HTML output. It will read
 its settings from a YAML file. It will
 also provide a command to quickly copy a file into your notes.
 
+## Things I will use:
+- [Pelican](https://github.com/getpelican/pelican)
+- [MarkdownSuperscript](https://pypi.python.org/pypi/MarkdownSuperscript)/[MarkdownSubscript](https://pypi.python.org/pypi/MarkdownSuperscript)
+- [mdx_del_ins](https://pypi.python.org/pypi/mdx_del_ins)
+- [markdown-checklist](https://github.com/FND/markdown-checklist)
+- [markdown.highlight](https://github.com/ribalba/markdown.highlight)
+- [figureAltCaption](https://github.com/jdittrich/figureAltCaption), perhaps as
+  a base from which to build my own plugin for creating and referencing figures?
+- [render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math)
+
 ## ToDo:
 - [ ] Write a Markdown plugin to provide figures and a referencing system
       for them.
@@ -41,4 +51,5 @@ also provide a command to quickly copy a file into your notes.
 - [ ] Develop a wrapper to handle all of this smoothly
 - [ ] Add a utility to this wrapper which copies files into the appropriate
       location in the notes
-
+- [ ] Creade a Markdown plugin which allows references to tables and code
+	  blocks?
