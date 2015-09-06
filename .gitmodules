@@ -1,0 +1,3 @@
+[submodule "scribbler/pelican-cite"]
+	path = scribbler/pelican-cite
+	url = https://github.com/cmacmackin/pelican-cite.git
