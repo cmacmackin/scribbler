@@ -43,7 +43,7 @@ also provide a command to quickly copy a file into your notes.
 ## ToDo:
 - [ ] Write a Markdown plugin to provide figures and a referencing system
       for them.
-- [ ] Write a Markdown or Pelican plugin to provide BibTeX referencing
+- [x] Write a Markdown or Pelican plugin to provide BibTeX referencing
 - [ ] Write a pelican plugin which will create a PNG (or SVG?) preview from
       PS or PDF and use that as a link to the original file
 - [ ] Design a Pelican template which produces good notebook-like output. This
