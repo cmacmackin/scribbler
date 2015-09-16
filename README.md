@@ -46,7 +46,7 @@ also provide a command to quickly copy a file into your notes.
 - [x] Write a Markdown or Pelican plugin to provide BibTeX referencing
 - [ ] Write a pelican plugin which will create a PNG (or SVG?) preview from
       PS or PDF and use that as a link to the original file
-- [ ] Design a Pelican template which produces good notebook-like output. This
+- [x] Design a Pelican template which produces good notebook-like output. This
       output should be suitable for conversion to a PDF and printing.
 - [ ] Develop a wrapper to handle all of this smoothly
 - [ ] Add a utility to this wrapper which copies files into the appropriate

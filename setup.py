@@ -48,7 +48,7 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     install_requires = ['pelican','MarkdownSuperscript','MarkdownSubscript',
-                        'mdx_del_ins', ],
+                        'mdx_del_ins','BeautifulSoup4'],
   entry_points = {
     'console_scripts': [
         'scribbler=scribbler:main',
