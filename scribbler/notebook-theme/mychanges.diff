@@ -1,0 +1,153 @@
+diff --git a/tipue-old.js b/static/js/tipuesearch.js
+index b411af5..eec68e1 100644
+--- a/tipue-old.js
++++ b/static/js/tipuesearch.js
+@@ -6,6 +6,9 @@ Tipue Search is released under the MIT License
+ http://www.tipue.com/search
+ */ 
+ 
++/*
++Modified by Chris MacMackin, May 17 2015
++*/
+ 
+ (function($) {
+ 
+@@ -283,17 +286,17 @@ http://www.tipue.com/search
+                          {
+                               if (show_replace == 1)
+                               {
+-                                   out += '<div id="tipue_search_warning_head">Showing results for ' + d + '</div>';
+-                                   out += '<div id="tipue_search_warning">Search instead for <a href="javascript:void(0)" id="tipue_search_replaced">' + d_r + '</a></div>'; 
++                                   out += '<p>Showing results for ' + d + '</p>';
++                                   out += '<p>Search instead for <a href="javascript:void(0)" id="tipue_search_replaced">' + d_r + '</a></p>'; 
+                               }
+                               if (c == 1)
+                               {
+-                                   out += '<div id="tipue_search_results_count">1 result</div>';
++                                   out += '<h1>Search <small>1 result</small></h1>';
+                               }
+                               else
+                               {
+                                    c_c = c.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+-                                   out += '<div id="tipue_search_results_count">' + c_c + ' results</div>';
++                                   out += '<h1>Search <small>' + c_c + ' results</small></h1>';
+                               }
+                               
+                               found.sort();
+@@ -301,15 +304,12 @@ http://www.tipue.com/search
+                               for (var i = 0; i < found.length; i++)
+                               {
+                                    var fo = found[i].split('^');
+-                                   if (l_o >= start && l_o < set.show + start)
++                                   out += found[i]
++				   if (l_o >= start && l_o < set.show + start)
+                                    {                                   
+-                                        out += '<div class="tipue_search_content_title"><a href="' + fo[3] + '"' + tipue_search_w + '>' +  fo[1] + '</a></div>';
++                                        out += '<h4><a href="' + fo[3] + '"' + tipue_search_w + '>' +  fo[1] + '</a></h4>';
+  
+-                                        if (set.showURL)
+-                                        {  
+-                                             out += '<div class="tipue_search_content_url"><a href="' + fo[3] + '"' + tipue_search_w + '>' + fo[3] + '</a></div>';
+-                                        }
+-                                                                                
++                                        
+                                         var t = fo[2];
+                                         var t_d = '';
+                                         var t_w = t.split(' ');
+@@ -329,7 +329,12 @@ http://www.tipue.com/search
+                                         {
+                                              t_d += ' ...';
+                                         }
+-                                        out += '<div class="tipue_search_content_text">' + t_d + '</div>';
++                                        out += '<div class="summary">' + t_d + '</div>';
++                                        if (set.showURL)
++                                        {  
++                                             out += '<div class="tipue_search_content_url"><small><a href="' + fo[3] + '"' + tipue_search_w + '>' + fo[3] + '</a></small></div>';
++                                        }
++                                        
+                                    }
+                                    l_o++;     
+                               }
+@@ -338,15 +343,15 @@ http://www.tipue.com/search
+                               {
+                                    var pages = Math.ceil(c / set.show);
+                                    var page = (start / set.show);
+-                                   out += '<nav><ul class="pagination">';
++                                   out += '<div class="pagination-centered"><ul class="pagination">';
+                                    
+                                    if (start > 0)
+                                    {
+-                                       out += '<li><a href="javascript:void(0)" class="tipue_search_foot_box" id="' + (start - set.show) + '_' + replace + '"><span aria-hidden="true">&laquo;</span></a></li>'; 
++                                       out += '<li class="arrow"><a href="javascript:void(0)" class="tipue_search_foot_box" id="' + (start - set.show) + '_' + replace + '"><span aria-hidden="true">&laquo;</span></a></li>'; 
+                                    }
+                                    else
+                                    {
+-                                       out += '<li class="disabled"><span aria-hidden="true">&laquo;</span></li>';
++                                       out += '<li class="arrow unavailable"><span aria-hidden="true"><a href="">&laquo;</a></span></li>';
+                                    }
+                                                        
+                                    if (page <= 2)
+@@ -360,7 +365,7 @@ http://www.tipue.com/search
+                                         {
+                                              if (f == page)
+                                              {
+-                                                  out += '<li class="active"><a href="#">' + (f + 1) + '<span class="sr-only">(current)</span></a></li>';
++                                                  out += '<li class="current"><a href="#">' + (f + 1) + '</a></li>';
+                                              }
+                                              else
+                                              {
+@@ -379,7 +384,7 @@ http://www.tipue.com/search
+                                         {
+                                              if (f == page)
+                                              {
+-                                                  out += '<li class="active"><a href="#">' + (f + 1) + '<span class="sr-only">(current)</span></a></li>';
++                                                  out += '<li class="current"><a href="#">' + (f + 1) + '</a></li>';
+                                              }
+                                              else
+                                              {
+@@ -390,11 +395,11 @@ http://www.tipue.com/search
+                                                       
+                                    if (page + 1 != pages)
+                                    {
+-                                       out += '<li><a href="javascript:void(0)" class="tipue_search_foot_box" id="' + (start + set.show) + '_' + replace + '"><span aria-hidden="true">&raquo;</span></a></li>'; 
++                                       out += '<li class="arrow"><a href="javascript:void(0)" class="tipue_search_foot_box" id="' + (start + set.show) + '_' + replace + '"><span aria-hidden="true">&raquo;</span></a></li>'; 
+                                    }
+                                    else
+                                    {
+-                                       out += '<li class="disabled"><span aria-hidden="true">&raquo;</span></li>'; 
++                                       out += '<li class="arrow unavailable"><span aria-hidden="true"><a href="">&raquo;</a></span></li>'; 
+                                    }                    
+                                    
+                                    out += '</ul></div>';
+@@ -402,25 +407,26 @@ http://www.tipue.com/search
+                          }
+                          else
+                          {
+-                              out += '<div id="tipue_search_warning_head">Nothing found</div>'; 
++                              out += '<h1>Search</h1>'
++                              out += '<p>Nothing found</p>'; 
+                          }
+                     }
+                     else
+                     {
+                          if (show_stop)
+                          {
+-                              out += '<div id="tipue_search_warning_head">Nothing found</div><div id="tipue_search_warning">Common words are largely ignored</div>';     
++                              out += '<p>Nothing found</p><p>Common words are largely ignored</p>';
+                          }
+                          else
+                          {
+-                              out += '<div id="tipue_search_warning_head">Search too short</div>';
++                              out += '<p>Search too short</p>';
+                               if (set.minimumLength == 1)
+                               {
+-                                   out += '<div id="tipue_search_warning">Should be one character or more</div>';
++                                   out += '<p>Should be one character or more</p>';
+                               }
+                               else
+                               {
+-                                   out += '<div id="tipue_search_warning">Should be ' + set.minimumLength + ' characters or more</div>';
++                                   out += '<p>Should be ' + set.minimumLength + ' characters or more</p>';
+                               }
+                          }
+                     }

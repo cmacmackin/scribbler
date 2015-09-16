@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}All Tags &ndash; {{ super() }}{% endblock title %}
+
+{% block content %}
+<h1>All Tags</h1>
+<section>
+    <p class='tag-page'>
+    {% for tag, articles in tags|sort %}
+        <a href="{{ SITEURL }}/{{ tag.url }}">{{ tag }}</a>&nbsp;({{ articles|count }}){% if not loop.last %}, {% endif %}
+    {% endfor %}
+    </p>    
+</section>
+{% endblock content %}

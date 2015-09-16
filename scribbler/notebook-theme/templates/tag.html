@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from 'pagination.html' import pagination %}
+
+{% block title %}{{ tag|striptags }} &ndash; {{ super() }}{% endblock title %}
+
+{% block content %}
+<h1>Notes with tag &ldquo;{{ tag }}&rdquo;</h1>
+{% for article in articles_page.object_list %}
+{% include 'summary.html' %}
+{% endfor %}
+{{ pagination(dates_page, dates_paginator.num_pages, page_name, SITEURL) }}
+{% endblock content %}

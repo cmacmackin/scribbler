@@ -1,0 +1,20 @@
+{% macro headline(article,url='.',title=False) %}
+<div class="headline">
+    {% if title %}
+    <h1>{{ article.date|strftime('%B %d, %Y') }}</h1>
+    <h2 class="subheader">{{ article.title }}</h2>
+    {% else %}
+    <h2><a href="{{ url }}/{{ article.url }}">{{ article.date|strftime('%B %d, %Y') }}</a></h2>
+    <h3 class="subheader">{{ article.title }}</h3>
+    {% endif %}
+    {% if article.tags %}
+    <hr>
+    <ul class="inline-list article-tags">
+        <li><strong>Tags:</strong></li>
+        {% for tag in article.tags %}
+        <li><a href="{{ url }}/{{ tag.url }}"><em>{{ tag }}</em></a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endmacro %}

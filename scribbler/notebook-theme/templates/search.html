@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results &ndash; {{ super() }}{% endblock title %}
+
+{% block content %}
+<div class="row">
+    <div class="small-12 columns">
+        <div id="tipue_search_content"><div id="tipue_search_loading"></div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="{{ SITEURL }}/tipuesearch_content.js"></script>
+<script type="text/javascript" src="{{ SITEURL }}/theme/js/tipuesearch_set.js"></script>
+<script type="text/javascript" src="{{ SITEURL }}/theme/js/tipuesearch.js"></script>
+<script>
+$(document).ready(function() {
+    $('#tipue_search_input').tipuesearch();
+});
+</script>
+{% endblock scripts %}

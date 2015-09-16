@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from 'headline.html' import headline %}
+
+{% block title %}{{ article.title|striptags }} &ndash; {{ super() }}{%endblock%}
+
+{% block description %}
+<meta name="description" content="{{ article.summary|e }}" />
+{% if article.tags %}
+<meta name="keywords" content=" {% for tag in article.tags %}{{ tag }} {% endfor %} "/>
+{% endif %}
+{% endblock description %}
+
+{% block content %}
+{{ headline(article,SITEURL,True) }}
+{{ article.content }}
+<div class="hide-for-print">
+    {% if article.prev_article %}
+    <a href="{{ SITEURL }}/{{ article.prev_article.url }}" class="pager left">&laquo; Previous</a>
+    {% endif %}
+    {% if article.next_article %}
+    <a href="{{ SITEURL }}/{{ article.next_article.url }}" class="pager right">Next &raquo;</a>
+    {% endif %}
+</div>
+{% endblock content %}

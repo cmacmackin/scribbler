@@ -1,0 +1,231 @@
+@media print {
+    a[href]:after {
+        content: "";
+    }
+    
+    .headline a, .headline a:visited {
+        text-decoration: none;
+    }
+    
+    .float a, .float a:visited {
+        text-decoration: none;
+    }
+    
+    a.footnote-backref {
+        display: none;
+    }
+}
+
+.site-title a, .site-title a:visited {
+    color: #222222;
+}
+
+.site-title a:hover{
+    color: #6f6f6f;
+}
+
+h5.sidebar-title {
+    border-bottom: 0.1em solid #eeeeee;
+    margin-top: 1em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.article-tags {
+    font-style: italic;
+    font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.article-tags strong {
+    font-style: normal;
+    font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+}
+
+
+.summary pre {
+    display: none;
+}
+
+.summary .th {
+    margin-bottom: 1.25rem;
+}
+
+.article {
+  padding-bottom: 0.3125rem; }
+
+pre {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #d8d8d8;
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+    background: #f2f2f2;
+    color: #333333;
+}
+
+pre > :first-child {
+    margin-top: 0;
+}
+
+pre > :last-child {
+    margin-bottom: 0;
+}
+
+pre h1, pre h2, pre h3, pre h4, pre h5, pre h6, pre p, pre li, pre dl {
+    color: #333333;
+}
+
+pre h1, pre h2, pre h3, pre h4, pre h5, pre h6 {
+    line-height: 1;
+    margin-bottom: 0.625rem;
+}
+
+pre h1.subheader, pre h2.subheader, pre h3.subheader, pre h4.subheader, pre h5.subheader, pre h6.subheader {
+    line-height: 1.4;
+}
+
+.highlight pre {
+    overflow-x: auto;
+    overflow-wrap: normal;
+    white-space: pre;
+}
+
+.sidebar form {
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin: 0;
+}
+
+.float {
+    text-align: center !important;
+    margin-top: 11.5%;
+}
+
+div.jumbo {
+    min-height: 90%;
+}
+
+.jumbo h1 {
+    font-size: 4.5rem;
+}
+
+.jumbo h2 {
+    font-size: 2.125rem;
+}
+
+.jumbo h3 {
+    font-size: 1.6875rem;
+}
+
+.jumbo h4 {
+    font-size: 1.375rem;
+}
+
+.jumbo h5 {
+    font-size: 1.125rem;
+}
+
+.jumbo h6 {
+    font-size: 1.125rem;
+}
+
+.jumbo p {
+    font-size: 1.125rem;
+}
+
+.jumbo hr {
+    margin-bottom: 39px;
+}
+
+div.details {
+    margin-bottom: 5%;
+}
+
+p.summary {
+    margin-bottom: 5%;
+}
+
+ul.links {
+    margin-bottom: 5%;
+    list-style-type: none;
+    text-align: center; 
+}
+
+ul.links > li {
+    display: inline-block;
+    margin-left: 0;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-right: 2px solid #DDDDDD;
+    font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
+    font-style: italic;
+    font-size: 1.25rem;
+}
+
+ul.links > li:last-child {
+    border-right: 0px;
+}
+
+section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.pager {
+/*
+    width: 139.594px;
+*/
+    font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
+    font-style: italic;
+}
+
+/*
+Tipue Search 4.0
+Copyright (c) 2014 Tipue
+Tipue Search is released under the MIT License
+http://www.tipue.com/search
+*/
+/*
+Modified by Chris MacMackin, May 17 2015
+*/
+#tipue_search_content {
+    margin-bottom: 1.5625rem;
+}
+
+#tipue_search_input {
+    color: #222;
+}
+
+#tipue_search_loading {
+    padding-top: 60px;
+    background: #FAFAFA url('../loader.gif') no-repeat left;
+}
+
+#tipue_search_results_count {
+    font: 300 13px/1.6 'Open Sans', sans-serif;
+    color: #333;
+}
+
+.tipue_search_content_url {
+    font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+    word-break: break-all;
+    word-break: break-word;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
+    margin-bottom: 0.625rem;
+}
+
+.tipue_search_content_url a {
+    color: #666666;
+    text-decoration: none;
+}
+
+.tipue_search_content_url a:hover {
+    color: #585858;
+}
+
+.h01 {
+    color: #0070f0;
+    font-weight: 400;
+}

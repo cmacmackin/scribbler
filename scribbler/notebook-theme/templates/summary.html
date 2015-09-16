@@ -1,0 +1,6 @@
+{% from 'headline.html' import headline %}
+<section class="summary">
+    {{ headline(article,SITEURL) }}
+    {{ article.summary }}
+    <p class='text-right'><a href="{{ SITEURL }}/{{ article.url }}"><em>Continue reading&hellip;</em></a></p>
+</section>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html class="no-js" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="author" content="{{AUTHOR}}" />
+        <title>{% block title %}{{ SITENAME }}{% endblock title %}</title>
+        {% block description %}
+        <meta name="keywords" content="Science Research Notes Scribbler"/>
+        {% endblock description %}
+
+        <link rel="stylesheet" href="{{ SITEURL }}/theme/css/foundation.css" />
+        <link rel="stylesheet" href="{{ SITEURL }}/theme/css/local.css" />
+        <link rel="stylesheet" href="{{ SITEURL }}/theme/css/pygments.css" />
+        <script src="{{ SITEURL }}/theme/js/modernizr.js"></script>
+    </head>
+    <body>
+        {% block page %}
+        <div class="row">
+            <!-- Sidebar -->
+            <aside class="large-4 columns hide-for-print sidebar">
+                <h1 class="site-title"><strong><a href='{{ SITEURL }}/index.html'>{{ SITENAME }}</a></strong></h1>
+                <h4>{{ AUTHOR }}</h4>
+                <p>{{ DESCRIPTION }}</p>
+                {% if ADDRESS %}
+                <ul class="vcard">
+                    <li class="fn">{{ AUTHOR }}</li>
+                    <li class="street-address">{{ STREET_ADDRESS }}</li>
+                    <li class="locality">{{ CITY }}{% if REGION %}, <span class="region">{{ REGION }}</span>{% endif %}</li>
+                    <li><span class="postal">{{ POSTAL }}</span></li>
+                    <li class="country">{{ COUNTRY }}</li>
+                    <li class="email"><a href="mailto:{{ EMAIL }}">{{ EMAIL }}</a></li>
+                </ul>
+                {% endif %}
+
+                <h5 class="sidebar-title">Search</h5>
+                <form action="{{ SITEURL }}/search.html">
+                <input type="text" name="q" id="tipue_search_input" placeholder="Search for keyword or phrase" autocomplete="off" required>
+                </form>
+
+                <h5 class="sidebar-title">Site</h5>
+                <ul class="side-nav">
+                    <li><a href="{{ SITEURL }}/index.html">Home</a>
+                    <li><a href="{{ SITEURL }}/archives.html">Archives</a>
+                    <li><a href="{{ SITEURL }}/tags.html">Tags</a>
+                </ul>
+
+                {% if pages %}
+                {% if pages|length == 1 %}
+                <h5 class="sidebar-title"</h5>Appendix</h5>
+                {% else %}
+                <h5 class="sidebar-title"</h5>Appendices</h5>
+                {% endif %}
+                <ul class="side-nav">
+                    {% for page in PAGES %}
+                    <li><a href="{{ SITEURL }}/{{ page.url }}">{{ page.title }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if LINKS %}
+                <h5 class="sidebar-title">Links</h5>
+                <ul class="side-nav">
+                    {% for name, link in LINKS %}
+                    <li><a href="{{ link }}">{{ name }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </aside>
+            <div class="large-8 columns">
+            {% block content %}{% endblock %}
+            </div>
+        </div>
+        {% endblock page %}
+        <div class="row hide-for-print">
+            <hr>
+            <div class="small-12 medium-5 columns">
+                <p class="small-text-center medium-text-left">&copy; {{ YEAR }} {{ AUTHOR }}</p>
+            </div>
+            <div class="small-12 medium-7 columns">
+                <p class="small-text-center medium-text-right">
+                    Proudly powered by <a href="http://blog.getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </p>
+            </div>
+        </div>
+        {% block scripts %}
+        <script src="{{ SITEURL }}/theme/js/jquery.min.js"></script>
+        <script src="{{ SITEURL }}/theme/js/foundation.min.js"></script>
+        <script>
+            $(document).foundation();
+        </script>
+        {% endblock scripts %}
+    </body>
+</html>

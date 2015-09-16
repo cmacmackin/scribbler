@@ -1,0 +1,28 @@
+{% macro pagination(pobj, num_pages, page_name, url) %}
+{% if num_pages > 1 %}
+<div class="pagination-centered hide-for-print">
+    <ul class="pagination">
+    {% if pobj.has_previous() %}
+        {% set num = pobj.previous_page_number() %}
+        <li class="arrow"><a href="{{ url }}/{{ page_name }}{{ num if num > 1 else '' }}.html">&laquo;</a></li>
+    {% else %}
+        <li class="arrow unavailable"><a href="#">&laquo;</a></li>
+    {% endif %}
+    {% for num in range( 1, 1 + num_pages ) %}
+      {% if num in [1,2,pobj.number-1,pobj.number,pobj.number+1,num_pages-1,num_pages] %}
+        <li class="{{ 'current' if num == pobj.number else '' }}"><a href="{{ url }}/{{ page_name }}{{ num if num > 1 else '' }}.html">{{ num }}</a></li>
+        {% set prevellip = False %}
+      {% elif not prevellip %}
+        <li class="unavailable"><a href="">&hellip;</a></li>
+        {% set prevellip = True %}
+      {% endif %}
+    {% endfor %}
+    {% if pobj.has_next() %}
+        <li class="arrow"><a href="{{ url }}/{{ page_name }}{{ pobj.next_page_number() }}.html">&raquo;</a></li>
+    {% else %}
+        <li class="arrow unavailable"><a href="#">&raquo;</a></li>
+    {% endif %}
+    </ul>
+</div>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from 'pagination.html' import pagination %}
+
+{% block title %}Notes from {{ period | reverse | join(' ') }} &ndash; {{ super() }}{% endblock title %}
+
+{% block content %}
+<h1>Notes from {{ period | reverse | join(' ') }}</h1>
+{% for article in dates.object_list %}
+{% include 'summary.html' %}
+{% endfor %}
+{% endblock content %}

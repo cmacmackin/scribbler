@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block page %}
+<div class="float jumbo">
+    <div class="row">
+        <h1><strong>{{ SITENAME }}</strong></h1>
+        <hr>
+        <div class="details">
+            <h2>{{ AUTHOR }}</h2>
+            {% if ADDRESS %}
+            <h4>{{ STREET_ADDRESS }}</h4>
+            <h4>{{ CITY }}{% if REGION %}, {{ REGION }}{% endif %}</h4>
+            <h4>{{ POSTAL }}</h4>
+            <h4>{{ COUNTRY }}</h4>
+            {% endif %}
+            {% if EMAIL %}
+            <h4><a href="mailto:{{ EMAIL }}">{{ EMAIL }}</a></h4>
+            {% endif %}
+        </div>
+        <ul class="links hide-for-print">
+            <li><a href="{{ SITEURL }}/{{ articles[-1].url }}">First Note</a></li>
+            <li><a href="{{ SITEURL }}/{{ articles[0].url }}">Latest Note</a></li>
+            <li><a href="{{ SITEURL }}/archives.html">All Notes</a></li>
+            <li><a href="{{ SITEURL }}/tags.html">Tags</a></li>
+        </ul>
+    </div>
+</div>
+<div class="row">
+    <div class="large-2 columns">&nbsp;</div>
+    <div class="large-8 columns">
+        <p class="text-center summary">{{ DESCRIPTION }}</p>
+    </div>
+    <div class="large-2 columns">&nbsp;</div>
+    {% if pages %}
+    <div class="large-12 columns text-center hide-for-print">
+        {% if pages|length == 1 %}
+        <h3>Appendix: <a href="{{ SITEURL }}/{{ pages[0].url }}">{{ pages[0].title }}</a></h3>
+        {% else %}
+        <h3>Appendices</h3>
+        <ul class="links">
+            {% for page in pages %}
+            <li><a href="{{ SITEURL }}/{{ page.url }}">{{ page.title }}</a></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock page %} 
