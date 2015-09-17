@@ -7,3 +7,6 @@
 [submodule "scribbler/markdown-checklist"]
 	path = scribbler/markdown-checklist
 	url = https://github.com/FND/markdown-checklist.git
+[submodule "scribbler/figureAltCaption"]
+	path = scribbler/figureAltCaption
+	url = https://github.com/jdittrich/figureAltCaption.git
