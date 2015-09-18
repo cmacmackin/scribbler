@@ -10,3 +10,6 @@
 [submodule "scribbler/figureAltCaption"]
 	path = scribbler/figureAltCaption
 	url = https://github.com/jdittrich/figureAltCaption.git
+[submodule "scribbler/figure-ref"]
+	path = scribbler/figure-ref
+	url = https://github.com/cmacmackin/figure-ref.git

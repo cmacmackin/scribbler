@@ -41,8 +41,10 @@ also provide a command to quickly copy a file into your notes.
 - [render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math)
 
 ## ToDo:
-- [ ] Write a Markdown plugin to provide figures and a referencing system
-      for them.
+- [x] Write a Markdown plugin to provide figures and a referencing system
+      for them. (In the end I wrote a Pelican plugin to do this, when used
+	  in combination with
+	  [figureAltCaption](https://github.com/jdittrich/figureAltCaption).)
 - [x] Write a Markdown or Pelican plugin to provide BibTeX referencing
 - [ ] Write a pelican plugin which will create a PNG (or SVG?) preview from
       PS or PDF and use that as a link to the original file
