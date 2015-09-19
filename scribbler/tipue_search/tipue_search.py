@@ -40,24 +40,24 @@ class Tipue_Search_JSON_Generator(object):
         if getattr(page, 'status', 'published') != 'published':
             return
 
-        soup_title = BeautifulSoup(page.title.replace('&nbsp;', ' '), "html.parser")
+        soup_title = BeautifulSoup(page.title.replace('&nbsp;', ' '), 'html.parser')
         page_title = soup_title.get_text(' ', strip=True).replace('“', '"').replace('”', '"').replace('’', "'").replace('^', '&#94;')
 
-        soup_text = BeautifulSoup(page.content, "html.parser")
+        soup_text = BeautifulSoup(page.content, 'html.parser')
         page_text = soup_text.get_text(' ', strip=True).replace('“', '"').replace('”', '"').replace('’', "'").replace('¶', ' ').replace('^', '&#94;')
         page_text = ' '.join(page_text.split())
 
-        if getattr(page, 'tags', 'None') == 'None':
+        if getattr(page, 'category', 'None') == 'None':
             page_category = ''
         else:
-            page_category = ','.join([tag.name for tag in page.tags])
+            page_category = page.category.name
 
-        page_url = '.' + '/' + page.url
+        page_url = self.siteurl + '/' + page.url
 
         node = {'title': page_title,
                 'text': page_text,
                 'tags': page_category,
-                'loc': page_url}
+                'url': page_url}
 
         self.json_nodes.append(node)
 
@@ -77,7 +77,8 @@ class Tipue_Search_JSON_Generator(object):
         # Should set default category?
         page_category = ''
 
-        page_url = urljoin('.', self.tpages[srclink])
+        page_url = urljoin(self.siteurl, self.tpages[srclink])
+
         node = {'title': page_title,
                 'text': page_text,
                 'tags': page_category,
@@ -87,7 +88,7 @@ class Tipue_Search_JSON_Generator(object):
 
 
     def generate_output(self, writer):
-        path = os.path.join(self.output_path, 'tipuesearch_content.js')
+        path = os.path.join(self.output_path, 'tipuesearch_content.json')
 
         pages = self.context['pages'] + self.context['articles']
 
@@ -102,7 +103,6 @@ class Tipue_Search_JSON_Generator(object):
         root_node = {'pages': self.json_nodes}
 
         with open(path, 'w', encoding='utf-8') as fd:
-            fd.write('var tipuesearch = ')
             json.dump(root_node, fd, separators=(',', ':'), ensure_ascii=False)
 
 
