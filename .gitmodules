@@ -13,6 +13,3 @@
 [submodule "scribbler/figure-ref"]
 	path = scribbler/figure-ref
 	url = https://github.com/cmacmackin/figure-ref.git
-[submodule "scribbler/pdf-img"]
-	path = scribbler/pdf-img
-	url = https://github.com/cmacmackin/pdf-img.git
