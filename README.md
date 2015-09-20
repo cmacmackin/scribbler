@@ -46,8 +46,8 @@ also provide a command to quickly copy a file into your notes.
 	  in combination with
 	  [figureAltCaption](https://github.com/jdittrich/figureAltCaption).)
 - [x] Write a Markdown or Pelican plugin to provide BibTeX referencing
-- [ ] Write a pelican plugin which will create a PNG (or SVG?) preview from
-      PS or PDF and use that as a link to the original file
+- [x] Write a pelican plugin which will create a PNG preview from
+      EPS, PS or PDF and use that as a link to the original file
 - [x] Design a Pelican template which produces good notebook-like output. This
       output should be suitable for conversion to a PDF and printing.
 - [ ] Develop a wrapper to handle all of this smoothly
