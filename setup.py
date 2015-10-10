@@ -13,7 +13,7 @@ setup(
   name = 'scribbler',
   packages = ['scribbler'],
   include_package_data = True,
-  version = __version,
+  version = __version__,
   description = 'Scribbler (a Canadian term for a workbook) is a wrapper for Pelican which integrates various plugins to provide scientific note-taking software.',
   long_description = long_description,
   author = 'Chris MacMackin',
@@ -44,17 +44,16 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3'markdown-checklistmarkdown-checklistmarkdown-checklist,
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-        'Programming Language :: Python :
-        'Programming Language :: Python :
     install_requires = ['pelican','MarkdownSuperscript','MarkdownSubscript',
                         'mdx_del_ins','BeautifulSoup4','markdown-checklist',
-                        'MarkdownHighlight'],
+                        'MarkdownHighlight','markdown-include','PyYAML',
+                        'pyPDF2'],
   entry_points = {
     'console_scripts': [
-        'scribbler=scribbler:main',
+        'scribbler=scribbler:cli',
     ],
   }
 )

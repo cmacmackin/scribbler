@@ -31,10 +31,28 @@ import subprocess
 from copy import copy
 from datetime import date
 from pickle import dump
+from glob import glob
+
+from python.utils import slugify
 
 import yaml
+import pdfkit
+import pyPDF2 import PdfFileMerger
 
 class Notebook(object):
+    """
+    A class describing and managing a Scribbler notebook. 
+    """
+    CONTENT_DIR = '.__content__'
+    SETTINGS_FILE = 'notebook.yml'
+    BACKUP_FILE = '.__notebook__.pkl'
+    PELICANCONF_FILE = '.__pelicanconf__.py'
+    NOTE_DIR = 'notes'
+    APPE_DIR = 'appendices'
+    STATIC_DIR = 'files'
+    HTML_DIR = 'html'
+    PDF_DIR = 'pdf'
+    MASTER_PDF = 'FullNotebook.pdf'
     DEFAULT_SETTINGS = {
         'author': 'No Author',
         'notebook name': 'A Scribbler Notebook',
@@ -50,12 +68,14 @@ class Notebook(object):
         'address': False,
         'street address': '',
         'city': '',
+        'region': '',
         'postal': '',
         'country': '',
         'plugins': [],
         'markdown extensions': [],
         'bibfile': '',
-        'filetypes': []
+        'filetypes': [],
+        'paper': 'Letter',
     }
     PELICAN_MAPPING = {
         'author': 'AUTHOR',
@@ -68,6 +88,7 @@ class Notebook(object):
         'address': 'ADDRESS',
         'street address': 'STREET_ADDRESS',
         'city': 'CITY',
+        'region': 'REGION',
         'postal': 'POSTAL',
         'country': 'COUNTRY',
         'plugins': 'PLUGINS',
@@ -107,8 +128,8 @@ class Notebook(object):
     }   
     DEFAULT_PELICAN_SETTINGS = {
         'DELETE_OUTPUT_DIRECTORY': True,
-        'OUTPUT_PATH': 'html/',
-        'PATH': 'content/',
+        'OUTPUT_PATH': self.HTML_DIR,
+        'PATH': self.CONTENT_DIR,
         'PAGE_PATHS': 'appendices',
         'RELATIVE_URLS': True,
         'THEME': '',
@@ -120,18 +141,13 @@ class Notebook(object):
         'YEAR': date.today().year,
         'AUTHOR_SAVE_AS': '',
         'CATEGORY_SAVE_AS': '',
-        'ARTICLE_URL': '{date:%Y}/{date:%b}/{date:%d}/{slug}.html',
-        'ARTICLE_SAVE_AS': '{date:%Y}/{date:%b}/{date:%d}/{slug}.html',	
-        'MONTH_ARCHIVE_SAVE_AS': '{date:%Y}/{date:%b}/index.html',
-        'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
+        'ARTICLE_URL': 'notes/{slug}.html',
+        'ARTICLE_SAVE_AS': 'notes/{slug}.html',	
+        'SLUGIFY_SOURCE': 'basename',
+        #~ 'MONTH_ARCHIVE_SAVE_AS': '{date:%Y}/{date:%b}/index.html',
+        #~ 'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
     }
-    SETTINGS_FILE = 'notebook.yml'
-    PELICANCONF_FILE = '.__pelicanconf__.py'
-    
-    """
-    A class describing and managing a Scribbler notebook. 
-    """
-    
+        
     def __init__(self, name, location):
         """
         If location already exists, then try to read notebook
@@ -142,8 +158,10 @@ class Notebook(object):
         self.location = os.path.abspath(location)
         self._settings = None
         self._pelican_settings = None
-        self.articles = []
-        self.appendices = []
+        self.notes = {}
+        self.appendices = {}
+        self.settings_mod_time = 0
+        self.psettings_mod_time = 0
         #~ self.output_path = os.path.join(location,'html')
         #~ self.content_path = os.path.join(location,'content')
     
@@ -154,7 +172,8 @@ class Notebook(object):
         returns a dictionary constructed by adjusting the  default
         settings with this information.
         '''
-        if self._settings:
+        yaml_time = os.path.getmtime(os.path.join(self.location,self.SETTINGS_FILE))
+        if self._settings and yaml_time <= self.settings_mod_time:
             return self._settings
         settings_file = open(os.path.join(self.location,self.SETTINGS_FILE),'r')
         file_settings = yaml.load(settings_file)
@@ -169,6 +188,7 @@ class Notebook(object):
         settings['markdown extensions'].extend(self.MARKDOWN_PLUGINS)
         settings['plugins'].extend(self.PELICAN_PLUGINS)
         self._settings = settings
+        self.settings_mod_time = yaml_time
         return settings
     
     @property
@@ -176,7 +196,7 @@ class Notebook(object):
         '''
         Returns a dictionary with the settings to be provided for Pelican.
         '''
-        if self._pelican_settings:
+        if self._pelican_settings and self.settings_mod_time < self.psettings_mod_time:
             return self._pelican_settings
         psettings = copy(self.DEFAULT_PELICAN_SETTINGS)
         psettings['OUTPUT_PATH'] = os.path.join(self.location,psettings['OUTPUT_PATH'])
@@ -185,6 +205,7 @@ class Notebook(object):
             if key in self.PELICAN_MAPPING:
                 psettings[self.PELICAN_MAPPING[key]] = self.settings[key]
         self._pelican_settings = psettings
+        self.psettings_mod_time = self.settings_mod_time
         return psettings
     
     def make_pelicanconf(self):
@@ -200,47 +221,178 @@ class Notebook(object):
         pfile.close()
     
     def del_pelicanconf(self):
+        """
+        Delete pelicanconf file if exists. Returns True if did exist,
+        False otherwise.
+        """
         if os.path.isfile(os.path.join(self.location, self.PELICANCONF_FILE)):
             os.remove(os.path.join(self.location, self.PELICANCONF_FILE))
             return True
         else:
             return False
     
-    def copy_in(self, path, location=None):
+    def _get_destination(self, path, location=None):
+        """
+        Returns the location in which to place the file.
+        """
+        # TODO: note that there may be corner cases I have not thought of or properly accounted for here
+        if path.strip().endswith('/'): path = path.strip()[:-1]
+        filename = os.path.basename(path)
+        if location:
+            loc = location
+            if os.isdir(os.path.join(self.location,self.STATIC_DIR,loc)):
+                if os.isdir(path):
+                    loc = os.path.join(loc, os.path.basename(os.path.dirname(path)))
+                else:
+                    loc = os.path.join(loc, filename)
+        else:
+            for ext, dest in self.settings['filetypes'].iteritems():
+                if ext != '*' and filename.endswith(ext):
+                    loc = dest
+                    break
+            else:
+                try:
+                    loc = self.settings['filetypes']['*']
+                except KeyError:
+                    raise ScribblerError('Could not find location for '
+                                         'type of file ' + filename)
+            loc = os.path.join(loc, filename)
+        return os.path.join(self.location, self.STATIC_DIR, loc)
+    
+    def copy_in(self, path, location=None, overwrite=False):
         """
         Copy the file at the specified path into the notebook contents
         If location is specified, place it there. Otherwise, place in
         default location for that filetypes.
         """
-        pass
+        dest = self._get_destination(path, location)
+        if not overwrite and (os.path.isfile(dest) or os.path.isdir(dest)):
+            raise OSError("File already exists at '{}'".format(dest))
+        elif overwrite and os.path.isdir(dest):
+            if os.path.islink(dest):
+                os.remove(dest)
+            else:
+                shutil.rmtree(dest)
+        if os.path.isdir(path):
+            shutil.copytree(path, dest)
+        else:
+            shutil.copy(path, dest)
     
-    def link_in(self, path, location=None):
+    def link_in(self, path, location=None, overwrite=False):
         """
         Create hard link in the notebook contents to the file at the 
         specified path. If location is specified, place link there.
         Otherwise, place in default locations for that filetype.
         """
-        pass
+        if os.path.isdir(path):
+            raise OSError("File '{}' is a directory".format(path))
+        dest = self._get_destination(path, location)
+        if os.path.isfile(dest):
+            if overwrite:
+                os.remove(dest)
+            else:
+                raise OSError("File already exists at '{}'".format(dest))
+        os.link(path, dest)
     
-    def symlink_in(self, paths, location=None):
+    def symlink_in(self, paths, location=None, overwrite=False):
         """
         Create symbolic link in the notebook contents to the file at the
         specified path. If location is specified, place link there.
         Otherwise, place in default locations for those filetypes.
         """
-        pass
+        dest = self._get_destination(path, location)
+        if not overwrite and (os.path.isfile(dest) or os.path.isdir(dest)):
+            raise OSError("File already exists at '{}'".format(dest))
+        elif overwrite and os.path.isdir(dest):
+            if os.path.islink(dest):
+                os.remove(dest)
+            else:
+                shutil.rmtree(dest)
+        os.link(path, dest)
     
-    def newnote(self, date, title):
+    def newnote(self, date, title, markup='md'):
         """
-        Create a new note with the specified date and title.
+        Create a new note with the specified date and title. Returns the
+        path to that note.
         """
-        pass
+        MARKUP_OPTIONS = {
+            'md': "Title: {0}\nDate: {1}\nTags: \n\n",
+            'rst': "{1}\n###################\n\n:date: {0}\n:tags: \n\n",
+            'html': "<html>\n\t<head>\n\t\t<title>{1}</title>\n\t\t"
+                    "<meta name='date' content='{0}' />\n\t\t"
+                    "<meta name='tags' content=' ' />\n\t</head>"
+                    "\n\t<body>\n\t\t\n\t</body>\n</html>",
+        }
+        name = date.split()[0] + '-' + slugify(title)
+        for ext in MARKUP_OPTIONS:
+            if os.path.isfile(os.path.join(self.location,self.NOTE_DIR,
+                              name + '.' + ext)):
+                raise ScribblerError('Date and name produce slug the '
+                                     'same as existing file ' + name +
+                                     '.' + ext)
+        basename = name + '.' + markup
+        path = os.path.join(self.location, self.NOTE_DIR, basename)
+        out = open(path, 'w')
+        try:
+            out.write(MARKUP_OPTIONS[markup])
+            out.close()
+        except KeyError as e:
+            out.close()
+            os.remove(path)
+            raise e
+        self.notes[basename] = ScribblerContent(title, date, 
+                                                os.path.join(self.NOTE_DIR, basename),
+                                                self)
+        self.save(os.path.join(self.location, self.BACKUP_FILE))
+        return path
     
     def newpage(self, title):
         """
-        Create a new page ("appendix") with the specified title.
+        Create a new page ("appendix") with the specified title. Returns
+        the path to the page file.
         """
-        pass
+        MARKUP_OPTIONS = {
+            'md': "Title: {0}\n\n",
+            'rst': "{1}\n###################\n\n",
+            'html': "<html>\n\t<head>\n\t\t<title>{1}</title>\n\t</head>"
+                    "\n\t<body>\n\t\t\n\t</body>\n</html>",
+        }
+        name = slugify(title)
+        for ext in MARKUP_OPTIONS:
+            if os.path.isfile(os.path.join(self.location,self.APPE_DIR,
+                              name + '.' + ext)):
+                raise ScribblerError('Date and name produce slug the '
+                                     'same as existing file ' + name +
+                                     '.' + ext)
+        basename = name + '.' + markup
+        path = os.path.join(self.location, self.APPE_DIR, basename)
+        out = open(path, 'w')
+        try:
+            out.write(MARKUP_OPTIONS[markup])
+            out.close()
+        except KeyError as e:
+            out.close()
+            os.remove(path)
+            raise e
+        self.notes[basename] = ScribblerContent(title, '????-??-??', 
+                                                os.path.join(self.APPE_DIR, basename),
+                                                self)
+        self.save(os.path.join(self.location, self.BACKUP_FILE))
+        return path
+    
+    def add_note(self):
+        """
+        Add a record of a note in an existing file, not previously registered
+        with Scribbler.
+        """
+        raise NotImplementedError() #TODO: Add this feature
+        
+    def add_page(self):
+        """
+        Add a record of a page/appendix in an existing file, not previously
+        registered with Scribbler.
+        """
+        raise NotImplementedError() #TODO: Add this feature
         
     def list_contents(self):
         """
@@ -256,17 +408,66 @@ class Notebook(object):
         the PDF pages.
         """
         self.make_pelicanconf()
+        content = os.path.join(self.location, self.CONTENT_DIR)
+        if os.path.isdir(content): shutil.rmtree(content)
+        os.mkdir(content)
+        shutil.copytree(os.path.join(self.location, self.NOTE_DIR), content)
+        shutil.copytree(os.path.join(self.location, self.APPE_DIR), content)
+        shutil.copytree(os.path.join(self.location, self.STATIC_DIR), content)
         subprocess.call(['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)])
         self.del_pelicanconf()
         self.update()
-        # TODO: add the code to produce PDFs
-    
+        shutil.rmtree(content)
+        master = PdfFileMerger()
+        master.addMetadata({u'/Title': self.settings['notebook name'],
+                            u'/Author': self.settings['author']})
+        src = os.path.join(self.notebook.location, self.HTML_DIR, 'index.html')
+        dest = os.path.join(self.notebook.location, self.PDF_DIR, 'titlepage.pdf')
+        pdfkit.from_file(src, dest)
+        master.append(dest)
+        for note in sorted(self.notes.values(), key=lambda n: n.slug):
+            if note.pdf_date < note.src_date: note.make_pdf()
+            master.append(os.path.join(self.location, note.pdf_path),
+                          note.date + ': ' + note.name)
+        for appe in sorted(self.appendices.values(), key=lambda a: a.slug):
+            if appe.pdf_date < appe.src_date: appe.make_pdf()
+            master.append(os.path.join(self.location, appe.pdf_path)
+                          'Appendix: ' + appe.name)
+        master.write(os.path.join(self.location, self.PDF_DIR, self.MASTER_PDF))
+        self.update()
+
     def update(self):
         """
         Update the list of the content stored in this notebook.
         """
-        pass
-    
+        # Copy list of articles and of pages
+        notes = copy(self.notes)
+        # Scan content directories for articles and pages
+        for root, dirs, files in os.walk(os.path.join(self.location, self.NOTE_DIR)):
+            for f in files:
+                if f in notes:
+                    self.notes[f].update()
+                    del notes[f]
+                else:
+                    path = os.path.join(os.path.relpath(root, self.location), f)
+                    self.notes[f] = ScribblerContent('Unknown', '????-??-??',
+                                                     path, self)
+        for n in notes:
+            del self.notes[n]
+        appen = copy(self.appendices)
+        for root, dirs, files in os.walk(os.path.join(self.location, self.APPE_DIR)):
+            for f in files:
+                if f in appen:
+                    self.appendices[f].update()
+                    del appen[f]
+                else:
+                    path = os.path.join(os.path.relpath(root, self.location), f)
+                    self.appendices[f] = ScribblerContent('Unknown', '????-??-??',
+                                                          path, self)
+        for a in appen:
+            del self.appendices[a]
+        self.save(os.path.join(self.location, self.BACKUP_FILE))
+
     def save(self, path):
         """
         Asks notebook to pickle itself and stores it in the specified path.

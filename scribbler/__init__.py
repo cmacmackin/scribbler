@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  sourceform.py
+#  __init__.py
 #  
 #  Copyright 2014 Christopher MacMackin <cmacmackin@gmail.com>
 #  
@@ -166,9 +166,12 @@ def build():
               help='Date to use for the new article, in format "YYYY-MM-DD HH:mm".')
 @click.option('--title', '-t', default=dt.strftime('%A'),
               help='Title of the new article.')
-def newnote(date, title):
+@click.option('--markup', '-m', default='md', type=click.Choice(['md','rst','html']),
+              help='Markup format to use for the note.')
+def newnote(date, title, markup):
     check_if_loaded(cur_notebook)
-    cur_notebook.newnote(date,title)
+    path = cur_notebook.newnote(date,title,markup)
+    click.launch(path)
 
 
 @cli.command(help='Creates a new appendix in the currently loaded '
@@ -193,12 +196,4 @@ def today():
 def cd():
     check_if_loaded(cur_notebook)
     click.launch(cur_notebook.location)
-
-    
-class ScribblerError(Exception):
-    pass
-
-
-class ScribblerWarning(Warning):
-    pass
 

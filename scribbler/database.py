@@ -33,7 +33,9 @@ import warnings
 from pickle import load
 from shutil import rmtree
 
-from . import ScribblerError, ScribblerWarning
+from pelican.utils import slugify
+
+from .errors import ScribblerError, ScribblerWarning
 from .notebook import Notebook
 
 class ScribblerDatabase(object):
@@ -47,7 +49,7 @@ class ScribblerDatabase(object):
     
     def __init__(self, data_dir):
         self.scribbler_dir = data_dir
-        if not os.isdir(self.scribbler_dir):
+        if not os.path.isdir(self.scribbler_dir):
             os.makedirs(self.scribbler_dir)
     
     @staticmethod
@@ -56,10 +58,10 @@ class ScribblerDatabase(object):
         Converts a notebook name to the filename which would store the
         pickled notebook.
         """
-        name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore')
-        name = unicode(re.sub('[^\w\s-]', '', name).strip().lower())
-        name = re.sub('[-\s]+', '-', name) 
-        return name + '.pkl'
+        #~ name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore')
+        #~ name = unicode(re.sub('[^\w\s-]', '', name).strip().lower())
+        #~ name = re.sub('[-\s]+', '-', name) 
+        return slugify(name) + '.pkl'
     
     def get(self, name):
         """
