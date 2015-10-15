@@ -1,12 +1,6 @@
 [submodule "scribbler/pelican-cite"]
 	path = scribbler/pelican-cite
 	url = https://github.com/cmacmackin/pelican-cite.git
-[submodule "scribbler/markdown.highlight"]
-	path = scribbler/markdown.highlight
-	url = https://github.com/ribalba/markdown.highlight.git
-[submodule "scribbler/markdown-checklist"]
-	path = scribbler/markdown-checklist
-	url = https://github.com/FND/markdown-checklist.git
 [submodule "scribbler/figureAltCaption"]
 	path = scribbler/figureAltCaption
 	url = https://github.com/jdittrich/figureAltCaption.git
