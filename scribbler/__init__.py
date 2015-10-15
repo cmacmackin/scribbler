@@ -33,9 +33,12 @@ Scribbler will produce PDFs from these HTML pages as well.
 """
 
 import datetime
+import os
 import sys
 import warnings
+
 import click
+
 from .database import ScribblerDatabase
 from .notebook import Notebook
 
@@ -77,11 +80,33 @@ def cli():
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
                    'content directory, to which SRC is copied.')
-@click.option('--recursive', '-R', '-r', is_flag=True,
-              help='Copy the contents of directories recursively.')
-def copy(src, destination, recursive):
-    click.secho('Not yet implemented.', fg='red', bold=True)
-
+@click.option('--recursive', '-R', is_flag=True,
+              help='Copy the contents of directories recursively. If a '
+                   'destination is specified then the directory tree '
+                   'will be reproduced there. Otherwise, the '
+                   'individual files will be placed in the default '
+                   'location for their filetype.')
+@click.option('--force', '-f', is_flag=True,
+              help='Overwrite files without asking permission first.')
+def copy(src, destination, recursive, force):
+    check_if_loaded(cur_notebook)
+    if not recursive and if os.path.isdir(src):
+        click.secho("Error: Path '{}' is a directory. Run with option -R.",
+                    fg='red')
+    elif os.path.isdir(src):
+        for dirpath, dirnames, filenames in os.walk(src):
+            cur_notebook.mkdirs(dirpath)
+            for name in filenames:
+                if destination:
+                    dest = os.path.join(os.path.relpath(dirpath, src), name)
+                    dest = os.path.join(destination, dest)
+                else:
+                    dest = None
+                add_file(cur_notebook.copy_in, os.path.join(dirpath, name),
+                         dest, force=force)
+    else:
+        add_file(cur_notebook.copy_in, src, destination, force=force)
+    
 
 @cli.command(help='Creates a hard link to SRC, located in DST, where '
                   'DST is evaluated relative to the root of your '
@@ -91,9 +116,31 @@ def copy(src, destination, recursive):
               help='Destination, relative to the root of the notebook '
                    'content directory, to which SRC is copied.')
 @click.option('--recursive', '-R', '-r', is_flag=True,
-              help='Link the contents of directories recursively.')
-def link(src, destination, recursive):
-    click.secho('Not yet implemented.', fg='red', bold=True)
+              help='Link the contents of directories recursively. If a '
+                   'destination is specified then the directory tree '
+                   'will be reproduced there. Otherwise, the '
+                   'individual links will be placed in the default '
+                   'location for their filetype.')
+@click.option('--force', '-f', is_flag=True,
+              help='Overwrite files without asking permission first.')
+def link(src, destination, recursive, force):
+    check_if_loaded(cur_notebook)
+    if not recursive and os.path.isdir(src):
+        click.secho("Error: Path '{}' is a directory. Run with option -R.",
+                    fg='red')
+    elif os.path.isdir(src):
+        for dirpath, dirnames, filenames in os.walk(src):
+            cur_notebook.mkdirs(dirpath)
+            for name in filenames:
+                if destination:
+                    dest = os.path.join(os.path.relpath(dirpath, src), name)
+                    dest = os.path.join(destination, dest)
+                else:
+                    dest = None
+                add_file(cur_notebook.link_in, os.path.join(dirpath, name),
+                         dest, force=force)
+    else:
+        add_file(cur_notebook.link_in, src, destination, force=force)
 
 
 @cli.command(help='Creates a SYMLINK to SRC from DST, where DST is '
@@ -103,11 +150,33 @@ def link(src, destination, recursive):
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
                    'content directory, to which SRC is copied.')
-def symlink(src, destination):
+@click.option('--recursive', '-R', '-r', is_flag=True,
+              help='Link the contents of directories recursively. If a '
+                   'destination is specified then the directory tree '
+                   'will be reproduced there. Otherwise, the '
+                   'individual links will be placed in the default '
+                   'location for their filetype. If this option is not '
+                   'specified and SRC is a directory, then a link will '
+                   'be made to a directory itself.')
+@click.option('--force', '-f', is_flag=True,
+              help='Overwrite files without asking permission first.')
+def symlink(src, destination, recursive, force):
     check_if_loaded(cur_notebook)
-    cur_notebook.symlink_in(src, destination)
+    if recursive and os.path.isdir(src):
+        for dirpath, dirnames, filenames in os.walk(src):
+            cur_notebook.mkdirs(dirpath)
+            for name in filenames:
+                if destination:
+                    dest = os.path.join(os.path.relpath(dirpath, src), name)
+                    dest = os.path.join(destination, dest)
+                else:
+                    dest = None
+                add_file(cur_notebook.symlink_in, os.path.join(dirpath, name),
+                         dest, force=force)
+    else:
+        add_file(cur_notebook.symlink_in, src, destination, force=force)
 
-    
+
 @cli.command(help='Create a new notebook with NAME. If a notebook '
                   'already exists in LOCATION then it will be scanned '
                   'for information. Otherwise, Scribbler will create '
@@ -159,6 +228,7 @@ def list():
 def build():
     check_if_loaded(cur_notebook)
     cur_notebook.build()
+    scribbler.save(cur_notebook)
 
 
 @cli.command(help='Creates a new note in the currently loaded notebook.')
@@ -197,3 +267,41 @@ def cd():
     check_if_loaded(cur_notebook)
     click.launch(cur_notebook.location)
 
+
+def add_file(method, src, dest, nb=cur_notebook, force=False):
+    """
+    A function for copying/linking/symlinking a file into a notebook.
+    It will pass SRC and DEST to METHOD, acting on notebook NB. In the
+    event that the file already exists then it will prompt for an
+    action. If FORCE is specified and True then files will be 
+    overwritten without asking permission first.
+    """
+    def newpath(name):
+        """
+        Computes what the new path within the notebook would be for
+        that name.
+        """
+        return os.path.join(os.path.dirname(nb.get_destination(src, dest)), newname)
+
+    try:
+        method(nb, src, dest, force)
+    except OSError:
+        if click.confirm('Placing this file in the notebook would '
+                         'overwrite an existing file. Continue?'):
+            method(nb, src, dest, overwrite=True)
+        else:
+            newname = os.basename(nb.get_destination(src, dest))
+            fname, ext = os.path.splitext(newname)
+            testname = newname
+            count = 0
+            while os.isfile(newpath(testname)):
+                count += 1
+                testname = fname + '-' + str(count) + ext
+            newname = testname
+            newname = click.confirm('Provide a new filename ("-" '
+                                    'indicates that the file should '
+                                    'not be copied)', default=newname)
+            if newname == '-':
+                return
+            else:
+                add_file(method, src, newpath(newname), nb)

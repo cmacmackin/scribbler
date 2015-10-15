@@ -30,7 +30,7 @@ import os.path
 import subprocess
 from copy import copy
 from datetime import date
-from pickle import dump
+from pickle import dump, load
 from glob import glob
 
 from python.utils import slugify
@@ -231,7 +231,16 @@ class Notebook(object):
         else:
             return False
     
-    def _get_destination(self, path, location=None):
+    def mkdirs(self, path):
+        """
+        If they do not exist, creates all directories needed for PATH.
+        """
+        try:
+            os.makedirs(os.path.dirname(path))
+        except:
+            pass
+    
+    def get_destination(self, path, location=None):
         """
         Returns the location in which to place the file.
         """
@@ -265,7 +274,7 @@ class Notebook(object):
         If location is specified, place it there. Otherwise, place in
         default location for that filetypes.
         """
-        dest = self._get_destination(path, location)
+        dest = self.get_destination(path, location)
         if not overwrite and (os.path.isfile(dest) or os.path.isdir(dest)):
             raise OSError("File already exists at '{}'".format(dest))
         elif overwrite and os.path.isdir(dest):
@@ -273,6 +282,7 @@ class Notebook(object):
                 os.remove(dest)
             else:
                 shutil.rmtree(dest)
+        self.mkdirs(dest)
         if os.path.isdir(path):
             shutil.copytree(path, dest)
         else:
@@ -286,12 +296,13 @@ class Notebook(object):
         """
         if os.path.isdir(path):
             raise OSError("File '{}' is a directory".format(path))
-        dest = self._get_destination(path, location)
+        dest = self.get_destination(path, location)
         if os.path.isfile(dest):
             if overwrite:
                 os.remove(dest)
             else:
                 raise OSError("File already exists at '{}'".format(dest))
+        self.mkdirs(dest)
         os.link(path, dest)
     
     def symlink_in(self, paths, location=None, overwrite=False):
@@ -300,7 +311,7 @@ class Notebook(object):
         specified path. If location is specified, place link there.
         Otherwise, place in default locations for those filetypes.
         """
-        dest = self._get_destination(path, location)
+        dest = self.get_destination(path, location)
         if not overwrite and (os.path.isfile(dest) or os.path.isdir(dest)):
             raise OSError("File already exists at '{}'".format(dest))
         elif overwrite and os.path.isdir(dest):
@@ -308,6 +319,7 @@ class Notebook(object):
                 os.remove(dest)
             else:
                 shutil.rmtree(dest)
+        self.mkdirs(dest)
         os.link(path, dest)
     
     def newnote(self, date, title, markup='md'):
@@ -418,6 +430,8 @@ class Notebook(object):
         self.del_pelicanconf()
         self.update()
         shutil.rmtree(content)
+        if not os.isdir(os.path.join(self.location, self.PDF_DIR)):
+            os.mkdir(os.path.join(self.location, self.PDF_DIR))
         master = PdfFileMerger()
         master.addMetadata({u'/Title': self.settings['notebook name'],
                             u'/Author': self.settings['author']})
@@ -476,3 +490,37 @@ class Notebook(object):
         dump(self, out)
         out.close()
 
+
+def create_notebook(name, location):
+    """
+    Looks to see if a notebook exists in this location. If so, loads
+    and returns it. Otherwise, creates one there and then returns a
+    corresponding object.
+    """
+    subdirs = [os.path.join(location, d) for d in 
+                [Notebook.APPE_DIR, Notebook.HTML_DIR, Notebook.PDF_DIR,
+                 Notebook.NOTE_DIR, Notebook.STATIC_DIR, 
+                 Notebook.SETTINGS_FILE]
+              ]
+    if os.path.isdir(location):
+        try:
+            infile = open(os.path.join(location, Notebook.SETTINGS_FILE))
+            nb = load(infile)
+        except:
+            nb = Notebook(name, location)
+        for dirname in subdirs:
+            try:
+                os.mkdir(dirname)
+            except:
+                pass
+        nb.update()
+    else:
+        os.mkdir(location)
+        for dirname in subdirs:
+            os.mkdir(dirname)
+        with open(os.path.join(location, Notebook.SETTINGS_FILE)) as f:
+            f.write("# Notebook configuration file\n")
+            f.write("notebook name: {}".format(name))
+        nb = Notebook(name, location)
+    nb.save(os.path.join(location, nb.BACKUP_FILE))
+    return nb

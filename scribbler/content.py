@@ -98,21 +98,21 @@ class ScribblerContent(object):
         pdfkit.from_file(src, dest)
 
 
-class IndexPage(object):
-    """
-    Represents the HTML index page (home page).
-    """
-    
-    def __init__(self):
-        self.notebook = None
-        self.html_path = ''
-        self.pdf_path = ''
-    
-    def make_pdf(self):
-        """
-        Produces a PDF version of the HTML index page (containing
-        information equivalent to a title page and an introducction)
-        if one does not exist or needs to be updated.
-        """
-        pass
+#~ class IndexPage(object):
+    #~ """
+    #~ Represents the HTML index page (home page).
+    #~ """
+    #~ 
+    #~ def __init__(self):
+        #~ self.notebook = None
+        #~ self.html_path = ''
+        #~ self.pdf_path = ''
+    #~ 
+    #~ def make_pdf(self):
+        #~ """
+        #~ Produces a PDF version of the HTML index page (containing
+        #~ information equivalent to a title page and an introducction)
+        #~ if one does not exist or needs to be updated.
+        #~ """
+        #~ pass
         

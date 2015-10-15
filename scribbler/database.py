@@ -145,6 +145,13 @@ class ScribblerDatabase(object):
         nb = load(infile)
         return nb
     
+    def save(self, nb):
+        """
+        Saves the notebook NB to the scribbler directory.
+        """
+        nb_file = open(os.path.join(self.scribbler_path, self.name_to_filename(nb.name)), 'w')
+        nb.save(nb_file)
+    
     def __iter__(self):
         """
         Returns an iterable of the notebooks in the database.
