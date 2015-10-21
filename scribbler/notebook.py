@@ -28,16 +28,19 @@ Contains a class for representing a Scribbler notebook.
 
 import os.path
 import subprocess
+import shutil
 from copy import copy
-from datetime import date
+from datetime import date, datetime
 from pickle import dump, load
 from glob import glob
 
-from python.utils import slugify
-
+from pelican.utils import slugify
 import yaml
 import pdfkit
-import pyPDF2 import PdfFileMerger
+from PyPDF2 import PdfFileMerger
+
+from .errors import ScribblerWarning
+from .content import ScribblerContent
 
 class Notebook(object):
     """
@@ -74,7 +77,7 @@ class Notebook(object):
         'plugins': [],
         'markdown extensions': [],
         'bibfile': '',
-        'filetypes': [],
+        'filetypes': {},
         'paper': 'Letter',
     }
     PELICAN_MAPPING = {
@@ -95,15 +98,15 @@ class Notebook(object):
         'markdown extensions': 'MD_EXTENSIONS',
         'bibfile': 'PUBLICATIONS_SRC',
     }
+    NO_MAPPING = ['paper', 'filetypes']
     PELICAN_PLUGINS = ['scribbler.render_math', 'scribbler.tipue_search',
                        'scribbler.neighbors', 'scribbler.pdf-img',
                        'scribbler.slugcollision','scribbler.pelican-cite',
                        'scribbler.figure-ref']
     MARKDOWN_PLUGINS = ['scribbler.figureAltCaption','superscript',
                         'markdown_checklist.extension','extra','subscript',
-                        'scribbler.markdown.highlight','subscript',
+                        'subscript','MarkdownHighlight.highlight',
                         'codehilite(css_class=highlight)','del_ins',
-                        'MarkdownHighlight.highlight',
                         'markdown_include.include']
     FILETYPES = {
         'jpg': 'images',
@@ -128,22 +131,27 @@ class Notebook(object):
     }   
     DEFAULT_PELICAN_SETTINGS = {
         'DELETE_OUTPUT_DIRECTORY': True,
-        'OUTPUT_PATH': self.HTML_DIR,
-        'PATH': self.CONTENT_DIR,
-        'PAGE_PATHS': 'appendices',
+        'OUTPUT_PATH': HTML_DIR,
+        'PATH': CONTENT_DIR,
+        'PAGE_PATHS': ["appendices"],
         'RELATIVE_URLS': True,
-        'THEME': '',
+        'THEME': os.path.normpath(os.path.join(os.path.dirname(__file__), 'notebook-theme')),
         'DIRECT_TEMPLATES':  ['index', 'archives', 'tags', 'search'],
         'TYPOGRIFY': True,
         'DEFAULT_PAGINATION': 10,
         'DEFAULT_ORPHANS': 2,
-        'PAGINATED_DIRECT_TEMPLATES': ('tag', 'archives', 'period_archives'),
+        'PAGINATED_DIRECT_TEMPLATES': ('index', 'tag', 'archives', 'period_archives'),
         'YEAR': date.today().year,
         'AUTHOR_SAVE_AS': '',
         'CATEGORY_SAVE_AS': '',
-        'ARTICLE_URL': 'notes/{slug}.html',
-        'ARTICLE_SAVE_AS': 'notes/{slug}.html',	
+        'ARTICLE_URL': NOTE_DIR + '/{slug}.html',
+        'ARTICLE_SAVE_AS': NOTE_DIR + '/{slug}.html',	
         'SLUGIFY_SOURCE': 'basename',
+        'FEED_ALL_ATOM': None,
+        'CATEGORY_FEED_ATOM': None,
+        'AUTHOR_FEED_ATOM': None,
+        'AUTHOR_FEED_RSS': None,
+        'SITEURL': 'http://www.null.org',
         #~ 'MONTH_ARCHIVE_SAVE_AS': '{date:%Y}/{date:%b}/index.html',
         #~ 'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
     }
@@ -154,6 +162,10 @@ class Notebook(object):
         information from its contents. This may override name. 
         Otherwise, create basic contents for a notebook at location.
         """
+        subdirs = [os.path.join(location, d) for d in 
+                    [Notebook.APPE_DIR, Notebook.HTML_DIR, Notebook.PDF_DIR,
+                     Notebook.NOTE_DIR, Notebook.STATIC_DIR]
+                  ]
         self.name = name
         self.location = os.path.abspath(location)
         self._settings = None
@@ -162,8 +174,19 @@ class Notebook(object):
         self.appendices = {}
         self.settings_mod_time = 0
         self.psettings_mod_time = 0
+        for dirname in subdirs:
+            try:
+                os.mkdir(dirname)
+            except:
+                pass
         #~ self.output_path = os.path.join(location,'html')
         #~ self.content_path = os.path.join(location,'content')
+    
+    def __eq__(self, other):
+        """
+        Equality test, needed for unit testing.
+        """
+        return self.__dict__ == other.__dict__
     
     @property
     def settings(self):
@@ -180,13 +203,13 @@ class Notebook(object):
         settings = copy(self.DEFAULT_SETTINGS)
         settings.update(file_settings)
         for key, val in settings.iteritems():
-            if key in self.DEFAULT_SETTINGS and isinstance(val,type(self.DEFAULT_SETTINGS[key])):
-                raise TypeError('Key "{}" in settings of type {}'.format(key,type(val)).__name__)
+            if key in self.DEFAULT_SETTINGS and not isinstance(val,type(self.DEFAULT_SETTINGS[key])):
+                raise TypeError('Key "{}" in settings of type {}'.format(key,type(val).__name__))
         tmp = settings['filetypes']
-        settings['filteypes'] = copy(self.FILETYPES)
-        settings['filetypes'].extend(tmp)
+        settings['filetypes'] = copy(self.FILETYPES)
+        settings['filetypes'].update(tmp)
         settings['markdown extensions'].extend(self.MARKDOWN_PLUGINS)
-        settings['plugins'].extend(self.PELICAN_PLUGINS)
+        settings['plugins'] = copy(self.PELICAN_PLUGINS) + settings['plugins']
         self._settings = settings
         self.settings_mod_time = yaml_time
         return settings
@@ -196,7 +219,8 @@ class Notebook(object):
         '''
         Returns a dictionary with the settings to be provided for Pelican.
         '''
-        if self._pelican_settings and self.settings_mod_time < self.psettings_mod_time:
+        self.settings # Called so that self.settings_mod_time will be updated
+        if self._pelican_settings and self.settings_mod_time <= self.psettings_mod_time:
             return self._pelican_settings
         psettings = copy(self.DEFAULT_PELICAN_SETTINGS)
         psettings['OUTPUT_PATH'] = os.path.join(self.location,psettings['OUTPUT_PATH'])
@@ -204,6 +228,8 @@ class Notebook(object):
         for key, val in self.settings.iteritems():
             if key in self.PELICAN_MAPPING:
                 psettings[self.PELICAN_MAPPING[key]] = self.settings[key]
+            elif key not in self.NO_MAPPING:
+                raise ScribblerWarning('Unrecognized setting: `{}`'.format(key))
         self._pelican_settings = psettings
         self.psettings_mod_time = self.settings_mod_time
         return psettings
@@ -215,7 +241,7 @@ class Notebook(object):
         pfile = open(os.path.join(self.location, self.PELICANCONF_FILE), 'w')
         pfile.write('#!/usr/bin/env python\n'
                     '# -*- coding: utf-8 -*- #\n'
-                    'from __future__ import unicode_literals\n')
+                    '#from __future__ import unicode_literals\n')
         for key, val in self.pelican_settings.iteritems():
             pfile.write('{} = {}\n'.format(key, repr(val)))
         pfile.close()
@@ -231,7 +257,8 @@ class Notebook(object):
         else:
             return False
     
-    def mkdirs(self, path):
+    @staticmethod
+    def mkdirs(path):
         """
         If they do not exist, creates all directories needed for PATH.
         """
@@ -245,18 +272,17 @@ class Notebook(object):
         Returns the location in which to place the file.
         """
         # TODO: note that there may be corner cases I have not thought of or properly accounted for here
-        if path.strip().endswith('/'): path = path.strip()[:-1]
+        if path.strip().endswith(os.path.sep): path = os.path.dirname(path)
         filename = os.path.basename(path)
-        if location:
+        if isinstance(location, str):
             loc = location
-            if os.isdir(os.path.join(self.location,self.STATIC_DIR,loc)):
-                if os.isdir(path):
-                    loc = os.path.join(loc, os.path.basename(os.path.dirname(path)))
-                else:
-                    loc = os.path.join(loc, filename)
+            if os.path.isdir(os.path.join(self.location,self.STATIC_DIR,loc)):
+                loc = os.path.join(loc, filename)
+            if os.path.isdir(path):
+                loc += os.path.sep
         else:
             for ext, dest in self.settings['filetypes'].iteritems():
-                if ext != '*' and filename.endswith(ext):
+                if ext != '*' and filename.endswith('.' + ext):
                     loc = dest
                     break
             else:
@@ -305,7 +331,7 @@ class Notebook(object):
         self.mkdirs(dest)
         os.link(path, dest)
     
-    def symlink_in(self, paths, location=None, overwrite=False):
+    def symlink_in(self, path, location=None, overwrite=False):
         """
         Create symbolic link in the notebook contents to the file at the
         specified path. If location is specified, place link there.
@@ -314,13 +340,22 @@ class Notebook(object):
         dest = self.get_destination(path, location)
         if not overwrite and (os.path.isfile(dest) or os.path.isdir(dest)):
             raise OSError("File already exists at '{}'".format(dest))
+        elif overwrite and os.path.isfile(dest):
+            os.remove(dest)
         elif overwrite and os.path.isdir(dest):
             if os.path.islink(dest):
                 os.remove(dest)
             else:
                 shutil.rmtree(dest)
         self.mkdirs(dest)
-        os.link(path, dest)
+        if os.path.isabs(path):
+            rpath = path
+        else:
+            if dest.endswith(os.path.sep):
+                rpath = os.path.relpath(path, dest[:len(os.path.sep)])
+            else:
+                rpath = os.path.relpath(path, dest)
+        os.link(rpath, dest)
     
     def newnote(self, date, title, markup='md'):
         """
@@ -329,12 +364,17 @@ class Notebook(object):
         """
         MARKUP_OPTIONS = {
             'md': "Title: {0}\nDate: {1}\nTags: \n\n",
-            'rst': "{1}\n###################\n\n:date: {0}\n:tags: \n\n",
-            'html': "<html>\n\t<head>\n\t\t<title>{1}</title>\n\t\t"
-                    "<meta name='date' content='{0}' />\n\t\t"
+            'rst': "{0}\n###################\n\n:date: {1}\n:tags: \n\n",
+            'html': "<html>\n\t<head>\n\t\t<title>{0}</title>\n\t\t"
+                    "<meta name='date' content='{1}' />\n\t\t"
                     "<meta name='tags' content=' ' />\n\t</head>"
-                    "\n\t<body>\n\t\t\n\t</body>\n</html>",
+                    "\n\t<body>\n\t\t\n\t</body>\n</html>\n",
         }
+        try:
+            datetime.strptime(date, '%Y-%m-%d %H:%M')
+        except:
+            raise ValueError('Incorrectly formatted date; date format '
+                             'should be YYYY-MM-DD HH:mm')
         name = date.split()[0] + '-' + slugify(title)
         for ext in MARKUP_OPTIONS:
             if os.path.isfile(os.path.join(self.location,self.NOTE_DIR,
@@ -346,7 +386,7 @@ class Notebook(object):
         path = os.path.join(self.location, self.NOTE_DIR, basename)
         out = open(path, 'w')
         try:
-            out.write(MARKUP_OPTIONS[markup])
+            out.write(MARKUP_OPTIONS[markup].format(title, date))
             out.close()
         except KeyError as e:
             out.close()
@@ -358,16 +398,16 @@ class Notebook(object):
         self.save(os.path.join(self.location, self.BACKUP_FILE))
         return path
     
-    def newpage(self, title):
+    def newpage(self, title, markup='md'):
         """
         Create a new page ("appendix") with the specified title. Returns
         the path to the page file.
         """
         MARKUP_OPTIONS = {
             'md': "Title: {0}\n\n",
-            'rst': "{1}\n###################\n\n",
-            'html': "<html>\n\t<head>\n\t\t<title>{1}</title>\n\t</head>"
-                    "\n\t<body>\n\t\t\n\t</body>\n</html>",
+            'rst': "{0}\n###################\n\n",
+            'html': "<html>\n\t<head>\n\t\t<title>{0}</title>\n\t</head>"
+                    "\n\t<body>\n\t\t\n\t</body>\n</html>\n",
         }
         name = slugify(title)
         for ext in MARKUP_OPTIONS:
@@ -380,15 +420,15 @@ class Notebook(object):
         path = os.path.join(self.location, self.APPE_DIR, basename)
         out = open(path, 'w')
         try:
-            out.write(MARKUP_OPTIONS[markup])
+            out.write(MARKUP_OPTIONS[markup].format(title))
             out.close()
         except KeyError as e:
             out.close()
             os.remove(path)
             raise e
-        self.notes[basename] = ScribblerContent(title, '????-??-??', 
-                                                os.path.join(self.APPE_DIR, basename),
-                                                self)
+        self.appendices[basename] = ScribblerContent(title, '????-??-??', 
+                                                     os.path.join(self.APPE_DIR, 
+                                                     basename), self)
         self.save(os.path.join(self.location, self.BACKUP_FILE))
         return path
     
@@ -412,8 +452,8 @@ class Notebook(object):
         appendices, and possibly static content stored in the notebook's
         content directory.
         """
-        pass
-    
+        raise NotImplementedError() #TODO: Add this feature
+
     def build(self):
         """
         Run Pelican to produce the HTML for this notebook. Then produce
@@ -423,29 +463,36 @@ class Notebook(object):
         content = os.path.join(self.location, self.CONTENT_DIR)
         if os.path.isdir(content): shutil.rmtree(content)
         os.mkdir(content)
-        shutil.copytree(os.path.join(self.location, self.NOTE_DIR), content)
-        shutil.copytree(os.path.join(self.location, self.APPE_DIR), content)
-        shutil.copytree(os.path.join(self.location, self.STATIC_DIR), content)
+        shutil.copytree(os.path.join(self.location, self.NOTE_DIR), 
+                        os.path.join(content, self.NOTE_DIR))
+        shutil.copytree(os.path.join(self.location, self.APPE_DIR),
+                        os.path.join(content, self.APPE_DIR))
+        shutil.copytree(os.path.join(self.location, self.STATIC_DIR),
+                        os.path.join(content, self.STATIC_DIR))
         subprocess.call(['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)])
         self.del_pelicanconf()
         self.update()
         shutil.rmtree(content)
-        if not os.isdir(os.path.join(self.location, self.PDF_DIR)):
+        if not os.path.isdir(os.path.join(self.location, self.PDF_DIR)):
             os.mkdir(os.path.join(self.location, self.PDF_DIR))
         master = PdfFileMerger()
         master.addMetadata({u'/Title': self.settings['notebook name'],
                             u'/Author': self.settings['author']})
-        src = os.path.join(self.notebook.location, self.HTML_DIR, 'index.html')
-        dest = os.path.join(self.notebook.location, self.PDF_DIR, 'titlepage.pdf')
+        src = os.path.join(self.location, self.HTML_DIR, 'index.html')
+        dest = os.path.join(self.location, self.PDF_DIR, 'titlepage.pdf')
         pdfkit.from_file(src, dest)
         master.append(dest)
         for note in sorted(self.notes.values(), key=lambda n: n.slug):
-            if note.pdf_date < note.src_date: note.make_pdf()
+            if note.pdf_date < note.src_date:
+                note.make_pdf()
+                note.update()
             master.append(os.path.join(self.location, note.pdf_path),
                           note.date + ': ' + note.name)
         for appe in sorted(self.appendices.values(), key=lambda a: a.slug):
-            if appe.pdf_date < appe.src_date: appe.make_pdf()
-            master.append(os.path.join(self.location, appe.pdf_path)
+            if appe.pdf_date < appe.src_date:
+                appe.make_pdf()
+                appe.update()
+            master.append(os.path.join(self.location, appe.pdf_path),
                           'Appendix: ' + appe.name)
         master.write(os.path.join(self.location, self.PDF_DIR, self.MASTER_PDF))
         self.update()
@@ -454,15 +501,14 @@ class Notebook(object):
         """
         Update the list of the content stored in this notebook.
         """
-        # Copy list of articles and of pages
         notes = copy(self.notes)
-        # Scan content directories for articles and pages
         for root, dirs, files in os.walk(os.path.join(self.location, self.NOTE_DIR)):
             for f in files:
                 if f in notes:
                     self.notes[f].update()
                     del notes[f]
                 else:
+                    if f.endswith('~'): continue
                     path = os.path.join(os.path.relpath(root, self.location), f)
                     self.notes[f] = ScribblerContent('Unknown', '????-??-??',
                                                      path, self)
@@ -475,6 +521,7 @@ class Notebook(object):
                     self.appendices[f].update()
                     del appen[f]
                 else:
+                    if f.endswith('~'): continue
                     path = os.path.join(os.path.relpath(root, self.location), f)
                     self.appendices[f] = ScribblerContent('Unknown', '????-??-??',
                                                           path, self)
@@ -497,28 +544,20 @@ def create_notebook(name, location):
     and returns it. Otherwise, creates one there and then returns a
     corresponding object.
     """
-    subdirs = [os.path.join(location, d) for d in 
-                [Notebook.APPE_DIR, Notebook.HTML_DIR, Notebook.PDF_DIR,
-                 Notebook.NOTE_DIR, Notebook.STATIC_DIR, 
-                 Notebook.SETTINGS_FILE]
-              ]
     if os.path.isdir(location):
         try:
-            infile = open(os.path.join(location, Notebook.SETTINGS_FILE))
+            infile = open(os.path.join(location, Notebook.BACKUP_FILE), 'r')
             nb = load(infile)
         except:
+            if not os.path.isfile(os.path.join(location, Notebook.SETTINGS_FILE)):
+                with open(os.path.join(location, Notebook.SETTINGS_FILE), 'w') as f:
+                    f.write("# Notebook configuration file\n")
+                    f.write("notebook name: {}".format(name))
             nb = Notebook(name, location)
-        for dirname in subdirs:
-            try:
-                os.mkdir(dirname)
-            except:
-                pass
         nb.update()
     else:
         os.mkdir(location)
-        for dirname in subdirs:
-            os.mkdir(dirname)
-        with open(os.path.join(location, Notebook.SETTINGS_FILE)) as f:
+        with open(os.path.join(location, Notebook.SETTINGS_FILE), 'w') as f:
             f.write("# Notebook configuration file\n")
             f.write("notebook name: {}".format(name))
         nb = Notebook(name, location)

@@ -90,7 +90,7 @@ def cli():
               help='Overwrite files without asking permission first.')
 def copy(src, destination, recursive, force):
     check_if_loaded(cur_notebook)
-    if not recursive and if os.path.isdir(src):
+    if not recursive and os.path.isdir(src):
         click.secho("Error: Path '{}' is a directory. Run with option -R.",
                     fg='red')
     elif os.path.isdir(src):

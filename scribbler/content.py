@@ -66,35 +66,39 @@ class ScribblerContent(object):
         Returns the path where an HTML file is expected to be, relative to
         the notebook root.
         """
-        return os.path.join(self.notebook.HTML_DIR, self.slug + '.html')
+        if os.path.basename(os.path.dirname(self.src_path)) == self.notebook.NOTE_DIR:
+            return os.path.join(self.notebook.HTML_DIR, self.notebook.NOTE_DIR, self.slug + '.html')
+        else:
+            return os.path.join(self.notebook.HTML_DIR, 'pages', self.slug + '.html')
     
     def update(self):
         """
         Updates information about the content.
         """
-        if not os.isfile(os.path.join(self.notebook.location, self.src_path)):
+        if not os.path.isfile(os.path.join(self.notebook.location, self.src_path)):
             raise ScribblerError("Note with path '{}' does not exist".format(self.src_path))
-        self.src_date = os.getmtime(os.path.join(self.notebook.location,
-                                    self.src_path))
-        if os.isfile(os.path.join(self.notebook.location, self._html_path())):
+        self.src_date = os.path.getmtime(os.path.join(self.notebook.location,
+                                         self.src_path))
+        if os.path.isfile(os.path.join(self.notebook.location, self._html_path())):
             self.html_path = self._html_path()
         else:
             self.html_path = None
-        if os.isfile(os.path.join(self.notebook.location, self._pdf_path())):
+        if os.path.isfile(os.path.join(self.notebook.location, self._pdf_path())):
             self.pdf_path = self._pdf_path()
-            self.pdf_date = os.getmtime(os.path.join(self.notebook.location,
-                                        self.pdf_path))
+            self.pdf_date = os.path.getmtime(os.path.join(self.notebook.location,
+                                             self.pdf_path))
         else:
             self.pdf_path = None
-            self.pdf_date = 10**17
+            self.pdf_date = 0
         
     def make_pdf(self):
         """
         Produces a PDF version of the content from its HTML version, if
         it requires updating or does not already exist.
         """
+        print self._html_path()
         src = os.path.join(self.notebook.location, self.html_path)
-        dest = os.path.join(self.notebook.location, self.pdf_path)
+        dest = os.path.join(self.notebook.location, self._pdf_path())
         pdfkit.from_file(src, dest)
 
 

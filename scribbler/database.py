@@ -68,7 +68,8 @@ class ScribblerDatabase(object):
         Get the notebook object corresponding to the provided name.
         """
         try:
-            infile = open(os.path.join(self.scribbler_dir,self.name_to_filename(name)),'r')
+            infile = open(os.path.join(self.scribbler_dir,
+                          self.name_to_filename(name)),'r')
         except IOError:
             raise ScribblerError('No notebook with name `{}`'.format(name))
         nb = load(infile)
@@ -161,5 +162,5 @@ class ScribblerDatabase(object):
         nb_list = []
         for f in files:
             with open(f,'r') as r:
-                nb_lost.append(load(r))        
+                nb_list.append(load(r))        
         return iter(nb_list)

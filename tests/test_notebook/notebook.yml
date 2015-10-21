@@ -1,0 +1,20 @@
+# Sample notebook configuration file
+author: Chris MacMackin
+notebook name: Test Notebook
+timezone: Canada/Atlantic
+language: en
+links:
+  - ['Link 1 Display Text', 'http://link1url.com']
+  - ['Link 2 Display Text', 'http://link2url.com']
+email: someone@something.com
+description: >
+  This notebook is for unit testing purposes. It doesn't contain much...
+address: True
+street address: 5415 Victoria Road
+city: Halifax
+region: Nova Scotia
+postal: B3H 4K5
+country: Canada
+plugins: []
+bibfile: './papers.bib'
+markdown extensions: []
