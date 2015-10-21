@@ -1,0 +1,42 @@
+# Sample notebook configuration file
+author: Author Name
+notebook name: A Scribbler Notebook
+timezone: Canada/Atlantic
+language: en
+links:
+  - ['Link 1 Display Text', 'http://link1url.com']
+  - ['Link 2 Display Text', 'http://link2url.com']
+email: someone@something.com
+description: >
+  This provides a description of your notebook. Talk about what's in it,
+  maybe providing a summary. You might also want to write a bit about the
+  author. Don't give any contact details about the author here, though.
+  Those are provided elsewhere.
+address: True
+street address: 24 Sussex Drive
+city: Ottawa
+postal: K1M 1M4
+country: Canada
+plugins: []
+bibfile: './papers.bib'
+markdown extensions: []
+filetypes:
+  jpg: images
+  jpeg: images
+  png: images
+  gif: images
+  eps: images
+  svg: images
+  pdf: pdfs
+  ps: pdfs
+  dvi: pdfs
+  tar.gz: tarballs
+  tar.bz: tarballs
+  tar.bz2: tarballs
+  tar.xz: tarballs
+  tar: tarballs
+  rar: tarballs
+  zip: tarballs
+  rtp: tarballs
+  deb: tarballs
+  *: attachments

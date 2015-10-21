@@ -96,7 +96,6 @@ class ScribblerContent(object):
         Produces a PDF version of the content from its HTML version, if
         it requires updating or does not already exist.
         """
-        print self._html_path()
         src = os.path.join(self.notebook.location, self.html_path)
         dest = os.path.join(self.notebook.location, self._pdf_path())
         pdfkit.from_file(src, dest)
