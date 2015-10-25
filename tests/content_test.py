@@ -28,9 +28,6 @@ Unit tests for the ScribblerContent class
 
 import os.path
 import shutil
-from tempfile import mkdtemp
-from filecmp import cmp
-from copy import copy
 from collections import namedtuple
 
 from scribbler.notebook import Notebook
