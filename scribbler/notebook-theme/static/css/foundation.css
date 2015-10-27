@@ -3037,7 +3037,7 @@ th.hide-for-touch {
 
 @media print {
   * {
-    background: transparent !important;
+    /*background: transparent !important;*/
     box-shadow: none !important;
     color: #000000 !important;
     /* Black prints faster: h5bp.com/s */

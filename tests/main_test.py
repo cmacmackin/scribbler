@@ -40,6 +40,7 @@ import scribbler as scr
 from mock import MagicMock, patch
 from nose.tools import *
 import yaml
+from click import command, argument, option
 from click.testing import CliRunner
 
 # Common variables to use for a test notebook
@@ -321,10 +322,61 @@ def symlink_test(add_file, mkdirs):
                              force=False)
 
 @patch('scribbler.notebook.Notebook.get_destination')
+@patch('os.path.isfile')
 @patch('scribbler.check_if_loaded', lambda x: None)
-def add_file_test(getdest):
+def add_file_test(isfile, getdest):
     """
     Checks that the add_file() method behaves correctly under various circumstances.
     """
+    @command()
+    @argument('src')
+    @argument('dest')
+    @option('--force', '-f', is_flag=True)
+    def click_mock(src, dest, force):
+        scr.add_file(method, src, dest, scr.cur_notebook, force)
+
+    def side_effect1(*args):
+        if not args[3]:
+            print 1
+            raise OSError
+        else:
+            print 2
+            pass
+            
     method = MagicMock()
-    assert False
+    scr.add_file(method, 'src', 'dest', scr.cur_notebook, True)
+    method.assert_called_with(scr.cur_notebook, 'src', 'dest', True)
+    method = MagicMock(side_effect=side_effect1)
+    runner = CliRunner()
+    result = runner.invoke(click_mock, ['src', 'dest'], input='y\n')
+    method.assert_any_call(scr.cur_notebook, 'src', 'dest', False)
+    method.assert_called_with(scr.cur_notebook, 'src', 'dest', True)
+    
+    method = MagicMock(side_effect=(OSError('1'), None))
+    isfile.side_effect=[True, False]
+    getdest.return_value = 'dest'
+    result = runner.invoke(click_mock, ['src', 'dest'], input='\n-\n')
+    assert 'Placing this file in the notebook would' in result.output
+    assert 'Provide a new filename' in result.output
+    method.assert_called_with(scr.cur_notebook, 'src', 'dest', False)
+    assert method.call_count == 1
+    
+    method = MagicMock(side_effect=(OSError('1'), None))
+    getdest.return_value = 'dest.txt'
+    isfile.side_effect=[True, False]
+    result = runner.invoke(click_mock, ['src', 'dest.txt'], input='\n\n')
+    method.assert_called_with(scr.cur_notebook, 'src', 'dest-1.txt', False)
+
+    method = MagicMock(side_effect=(OSError('1'), None))
+    getdest.return_value = 'dest.txt'
+    isfile.side_effect=[True, False, False]
+    result = runner.invoke(click_mock, ['src', 'dest.txt'], input='\nthingy.txt\n')
+    method.assert_called_with(scr.cur_notebook, 'src', 'thingy.txt', False)
+
+    method = MagicMock(side_effect=(OSError('1'), None))
+    getdest.return_value = 'out/dest.txt'
+    isfile.side_effect=[True, False]
+    result = runner.invoke(click_mock, ['src', 'out/dest.txt'], input='\n\n')
+    print result.output
+    method.assert_called_with(scr.cur_notebook, 'src', 'out/dest-1.txt', False)
+    

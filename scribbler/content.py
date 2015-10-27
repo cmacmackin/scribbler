@@ -98,7 +98,7 @@ class ScribblerContent(object):
         """
         src = os.path.join(self.notebook.location, self.html_path)
         dest = os.path.join(self.notebook.location, self._pdf_path())
-        pdfkit.from_file(src, dest)
+        pdfkit.from_file(src, dest, options=self.notebook.pdf_settings)
 
 
 #~ class IndexPage(object):

@@ -18,6 +18,10 @@
     a.cite-backref {
         display: none;
     }
+    
+    body {
+        background: #FFFFFF;/* !important;*/
+    }
 }
 
 .site-title a, .site-title a:visited {

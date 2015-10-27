@@ -47,9 +47,8 @@ __appname__    = "FORD"
 __author__     = "Chris MacMackin"
 __maintainer__ = "Chris MacMackin"
 __license__    = "GPLv3"
-__status__     = "Pre-Alpha"
-__version__ = '0.1.0'
-#__credits__    = []
+__status__     = "Beta"
+__version__    = '0.2.0'
 
 dt = datetime.datetime.now()
 scribbler = ScribblerDatabase(click.get_app_dir(__appname__))
@@ -59,7 +58,6 @@ def check_if_loaded(notebook):
     """
     Raise an error message if no notebook is loaded.
     """
-    print notebook
     if not isinstance(notebook,Notebook):
         click.secho('Can not perform this operation: no notebook loaded.',
                     fg='red')
@@ -186,7 +184,7 @@ def symlink(src, destination, recursive, force):
                   'for information. Otherwise, Scribbler will create '
                   'the necessary files.')
 @click.argument('name', type=click.STRING)
-@click.argument('location', type=click.Path(exists=True))
+@click.argument('location', type=click.Path())
 def init(name, location):
     scribbler.add(name, location)
 
@@ -287,6 +285,7 @@ def add_file(method, src, dest, nb=cur_notebook, force=False):
         Computes what the new path within the notebook would be for
         that name.
         """
+        print nb.get_destination(src, dest)
         return os.path.join(os.path.dirname(nb.get_destination(src, dest)), newname)
 
     try:
@@ -294,19 +293,19 @@ def add_file(method, src, dest, nb=cur_notebook, force=False):
     except OSError:
         if click.confirm('Placing this file in the notebook would '
                          'overwrite an existing file. Continue?'):
-            method(nb, src, dest, overwrite=True)
+            method(nb, src, dest, True)
         else:
-            newname = os.basename(nb.get_destination(src, dest))
+            newname = os.path.basename(nb.get_destination(src, dest))
             fname, ext = os.path.splitext(newname)
             testname = newname
             count = 0
-            while os.isfile(newpath(testname)):
+            while os.path.isfile(newpath(testname)):
                 count += 1
                 testname = fname + '-' + str(count) + ext
+                if count > 3: raise Exception()
             newname = testname
-            newname = click.confirm('Provide a new filename ("-" '
-                                    'indicates that the file should '
-                                    'not be copied)', default=newname)
+            newname = click.prompt('Provide a new filename ("-" '
+                                   'to not copy)', default=newname)
             if newname == '-':
                 return
             else:

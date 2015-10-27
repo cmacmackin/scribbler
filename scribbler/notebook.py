@@ -152,10 +152,18 @@ class Notebook(object):
         'AUTHOR_FEED_ATOM': None,
         'AUTHOR_FEED_RSS': None,
         'SITEURL': 'http://www.null.org',
+        'MATH_JAX': {'message_style': 'none'},
         #~ 'MONTH_ARCHIVE_SAVE_AS': '{date:%Y}/{date:%b}/index.html',
         #~ 'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
     }
-        
+    PDF_SETTINGS = {
+        'margin-top': '0.9in',
+        'margin-right': '0.0in',
+        'margin-bottom': '0.9in',
+        'margin-left': '0.0in',
+        'quiet': '',
+    }
+    
     def __init__(self, name, location):
         """
         If location already exists, then try to read notebook
@@ -236,6 +244,15 @@ class Notebook(object):
         self._pelican_settings = psettings
         self.psettings_mod_time = self.settings_mod_time
         return psettings
+    
+    @property
+    def pdf_settings(self):
+        """
+        Returns a dictionary with the settings to be handed to pdfkit.
+        """
+        settings = copy(self.PDF_SETTINGS)
+        settings['page-size'] = self.settings['paper']
+        return settings
     
     def make_pelicanconf(self):
         """
@@ -476,6 +493,7 @@ class Notebook(object):
         self.del_pelicanconf()
         self.update()
         shutil.rmtree(content)
+        print('Producing PDF files...')
         if not os.path.isdir(os.path.join(self.location, self.PDF_DIR)):
             os.mkdir(os.path.join(self.location, self.PDF_DIR))
         master = PdfFileMerger()
@@ -483,7 +501,7 @@ class Notebook(object):
                             u'/Author': self.settings['author']})
         src = os.path.join(self.location, self.HTML_DIR, 'index.html')
         dest = os.path.join(self.location, self.PDF_DIR, 'titlepage.pdf')
-        pdfkit.from_file(src, dest)
+        pdfkit.from_file(src, dest, options=self.pdf_settings)
         master.append(dest)
         for note in sorted(self.notes.values(), key=lambda n: n.slug):
             if note.pdf_date < note.src_date:
@@ -498,6 +516,7 @@ class Notebook(object):
             master.append(os.path.join(self.location, appe.pdf_path),
                           'Appendix: ' + appe.name)
         master.write(os.path.join(self.location, self.PDF_DIR, self.MASTER_PDF))
+        print('Done.')
         self.update()
 
     def update(self):
@@ -536,7 +555,6 @@ class Notebook(object):
         """
         Asks notebook to pickle itself and stores it in the specified path.
         """
-        print 'WTF?'
         out = open(path,'w')
         dump(self, out)
         out.close()
@@ -549,14 +567,15 @@ def create_notebook(name, location):
     corresponding object.
     """
     if os.path.isdir(location):
+        if not os.path.isfile(os.path.join(location, Notebook.SETTINGS_FILE)):
+            with open(os.path.join(location, Notebook.SETTINGS_FILE), 'w') as f:
+                print 'why?'
+                f.write("# Notebook configuration file\n")
+                f.write("notebook name: {}".format(name))
         try:
             infile = open(os.path.join(location, Notebook.BACKUP_FILE), 'r')
             nb = load(infile)
         except:
-            if not os.path.isfile(os.path.join(location, Notebook.SETTINGS_FILE)):
-                with open(os.path.join(location, Notebook.SETTINGS_FILE), 'w') as f:
-                    f.write("# Notebook configuration file\n")
-                    f.write("notebook name: {}".format(name))
             nb = Notebook(name, location)
         nb.update()
     else:

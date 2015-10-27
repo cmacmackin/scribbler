@@ -36,7 +36,7 @@ from shutil import rmtree
 from pelican.utils import slugify
 
 from .errors import ScribblerError, ScribblerWarning
-from .notebook import Notebook
+from .notebook import Notebook, create_notebook
 
 class ScribblerDatabase(object):
     """
@@ -85,11 +85,13 @@ class ScribblerDatabase(object):
                 raise ScribblerError('Notebook with name `{}` already exists'.format(name))
             if self.name_to_filename(nb.name) == self.name_to_filename(name):
                 raise ScribblerError('Name `{}` too similar to that of existing notebook `{}`'.format(name, nb.name))
-            if os.path.samefile(nb.location, location):
+            if os.path.isdir(location) and os.path.samefile(nb.location, location):
                 raise ScribblerError('Notebook `{}` already exists at location {}'.format(nb.name, location)) 
         if os.path.isfile(location):
             raise ScribblerError('Location {} exists but is not a directory'.format(location))
-        nb = Notebook(name, location)
+        print 1
+        nb = create_notebook(name, location)
+        print 2
         nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(name))
         nb.save(nb_file)
     
@@ -164,7 +166,6 @@ class ScribblerDatabase(object):
         files.sort()
         nb_list = []
         for f in files:
-            print(f)
             with open(f,'r') as r:
                 nb_list.append(load(r))        
         return iter(nb_list)
