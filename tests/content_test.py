@@ -29,6 +29,7 @@ Unit tests for the ScribblerContent class
 import os.path
 import shutil
 from collections import namedtuple
+from copy import copy
 
 from scribbler.notebook import Notebook
 from scribbler.content  import ScribblerContent
@@ -36,7 +37,6 @@ from scribbler.errors import ScribblerError
 
 from mock import MagicMock, patch
 from nose.tools import *
-import yaml
 
 location = 'test_notebook'
 note = None
@@ -135,6 +135,16 @@ def update_test():
     assert note.pdf_path == mock_pdf_path(1)
     assert note.src_date == srcm
     assert note.pdf_date == os.path.getmtime(mock_pdf_path(1)[1:])
+
+@raises(ScribblerError)
+@with_setup(setup_null, teardown_update)
+def update_bad_path_test():
+    """
+    Checks an error raised by ScribblerContent.update() if src_path does not exist.
+    """
+    badpage = copy(page)
+    badpage.src_path = 'Does not exist'
+    badpage.update()
 
 def setup_make_pdf():
     shutil.copy('to-pdf-test.html', mock_html_path(1)[1:])

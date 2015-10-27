@@ -83,14 +83,14 @@ class ScribblerDatabase(object):
         for nb in self:
             if nb.name == name:
                 raise ScribblerError('Notebook with name `{}` already exists'.format(name))
-            if name_to_filename(nb.name) == name_to_filename(name):
+            if self.name_to_filename(nb.name) == self.name_to_filename(name):
                 raise ScribblerError('Name `{}` too similar to that of existing notebook `{}`'.format(name, nb.name))
             if os.path.samefile(nb.location, location):
                 raise ScribblerError('Notebook `{}` already exists at location {}'.format(nb.name, location)) 
         if os.path.isfile(location):
-            raise ScribblerError('Location {} exists but is not a directory'.format(path))
+            raise ScribblerError('Location {} exists but is not a directory'.format(location))
         nb = Notebook(name, location)
-        nb_file = open(os.path.join(self.scribbler_path, self.name_to_filename(name)), 'w')
+        nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(name))
         nb.save(nb_file)
     
     def delete(self, name, del_files=False):
@@ -114,10 +114,10 @@ class ScribblerDatabase(object):
         Loads the notebook with the provided name.
         """
         self.unload()
-        try:
-            os.symlink(os.path.join(self.scribbler_dir, self.name_to_filename(name)),
-                       os.path.join(self.scribbler_dir, self.LOADED_NAME))
-        except OSError:
+        srcfile = self.name_to_filename(name)
+        if os.path.isfile(os.path.join(self.scribbler_dir, srcfile)):
+            os.symlink(srcfile, os.path.join(self.scribbler_dir, self.LOADED_NAME))
+        else:
             raise ScribblerError('No notebook with name `{}`'.format(name))
     
     def unload(self):
@@ -130,6 +130,9 @@ class ScribblerDatabase(object):
             pass
         
     def is_current(self, name):
+        """
+        Tests if notebook NAME is the one currently loaded.
+        """
         curpath = os.path.join(self.scribbler_dir, self.LOADED_NAME)
         namepath = os.path.join(self.scribbler_dir, self.name_to_filename(name))
         return (os.path.islink(curpath) and 
@@ -150,17 +153,18 @@ class ScribblerDatabase(object):
         """
         Saves the notebook NB to the scribbler directory.
         """
-        nb_file = open(os.path.join(self.scribbler_path, self.name_to_filename(nb.name)), 'w')
+        nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(nb.name))
         nb.save(nb_file)
     
     def __iter__(self):
         """
         Returns an iterable of the notebooks in the database.
         """
-        files = [f for f in os.listdir(self.scribbler_dir) if f != self.LOADED_NAME and f.endswith('.pkl')]
+        files = [os.path.join(self.scribbler_dir,f) for f in os.listdir(self.scribbler_dir) if f != self.LOADED_NAME and f.endswith('.pkl')]
         files.sort()
         nb_list = []
         for f in files:
+            print(f)
             with open(f,'r') as r:
                 nb_list.append(load(r))        
         return iter(nb_list)

@@ -333,7 +333,6 @@ def pelican_settings_test():
     ymlfile.close()
     psettings3 = nb.pelican_settings
     expected[nb.PELICAN_MAPPING['address']] = True
-    print psettings3[nb.PELICAN_MAPPING['address']], expected[nb.PELICAN_MAPPING['address']]
     assert psettings3 == expected
 
 def teardown_pelicanconf():
@@ -356,6 +355,7 @@ def pelicanconf_test():
     assert conf_dict == nb.pelican_settings
     assert nb.del_pelicanconf()
     assert not os.path.isfile(os.path.join(loc, nb.PELICANCONF_FILE))
+    assert not nb.del_pelicanconf()
 
 @raises(NotImplementedError)
 def add_note_test():
@@ -580,3 +580,12 @@ def build_test():
     assert page1t == os.path.getmtime('test_notebook/pdf/page1.pdf')
     assert page2t < os.path.getmtime('test_notebook/pdf/page2.pdf')
 
+def equals_test():
+    """
+    Checks the overloaded equivalency operator for the Notebook class.
+    """
+    assert nb == nb
+    testnb = copy(nb)
+    testnb.location = 'none'
+    assert nb != testnb
+    assert nb != 'string'

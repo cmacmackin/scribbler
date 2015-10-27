@@ -186,7 +186,10 @@ class Notebook(object):
         """
         Equality test, needed for unit testing.
         """
-        return self.__dict__ == other.__dict__
+        try:
+            return self.__dict__ == other.__dict__
+        except AttributeError:
+            return False
     
     @property
     def settings(self):
@@ -533,6 +536,7 @@ class Notebook(object):
         """
         Asks notebook to pickle itself and stores it in the specified path.
         """
+        print 'WTF?'
         out = open(path,'w')
         dump(self, out)
         out.close()

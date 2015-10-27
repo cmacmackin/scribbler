@@ -41,6 +41,7 @@ import click
 
 from .database import ScribblerDatabase
 from .notebook import Notebook
+from .errors import ScribblerWarning
 
 __appname__    = "FORD"
 __author__     = "Chris MacMackin"
@@ -58,6 +59,7 @@ def check_if_loaded(notebook):
     """
     Raise an error message if no notebook is loaded.
     """
+    print notebook
     if not isinstance(notebook,Notebook):
         click.secho('Can not perform this operation: no notebook loaded.',
                     fg='red')
@@ -76,7 +78,7 @@ def cli():
                   'otherwise specified, files will be placed in the '
                   'directory corresponding to their file type, as '
                   'specified in the notebook\'s YAML file.')
-@click.argument('src', type=click.Path(exists=True), nargs=-1)
+@click.argument('src', type=click.Path(exists=True))
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
                    'content directory, to which SRC is copied.')
@@ -91,7 +93,7 @@ def cli():
 def copy(src, destination, recursive, force):
     check_if_loaded(cur_notebook)
     if not recursive and os.path.isdir(src):
-        click.secho("Error: Path '{}' is a directory. Run with option -R.",
+        click.secho("Error: Path '{}' is a directory. Run with option -R.".format(src),
                     fg='red')
     elif os.path.isdir(src):
         for dirpath, dirnames, filenames in os.walk(src):
@@ -99,6 +101,7 @@ def copy(src, destination, recursive, force):
             for name in filenames:
                 if destination:
                     dest = os.path.join(os.path.relpath(dirpath, src), name)
+                    dest = os.path.normpath(dest)
                     dest = os.path.join(destination, dest)
                 else:
                     dest = None
@@ -106,12 +109,11 @@ def copy(src, destination, recursive, force):
                          dest, force=force)
     else:
         add_file(cur_notebook.copy_in, src, destination, force=force)
-    
 
 @cli.command(help='Creates a hard link to SRC, located in DST, where '
                   'DST is evaluated relative to the root of your '
                   'notebook contents.')
-@click.argument('src', type=click.Path(exists=True), nargs=-1)
+@click.argument('src', type=click.Path(exists=True))
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
                    'content directory, to which SRC is copied.')
@@ -126,7 +128,7 @@ def copy(src, destination, recursive, force):
 def link(src, destination, recursive, force):
     check_if_loaded(cur_notebook)
     if not recursive and os.path.isdir(src):
-        click.secho("Error: Path '{}' is a directory. Run with option -R.",
+        click.secho("Error: Path '{}' is a directory. Run with option -R.".format(src),
                     fg='red')
     elif os.path.isdir(src):
         for dirpath, dirnames, filenames in os.walk(src):
@@ -134,6 +136,7 @@ def link(src, destination, recursive, force):
             for name in filenames:
                 if destination:
                     dest = os.path.join(os.path.relpath(dirpath, src), name)
+                    dest = os.path.normpath(dest)
                     dest = os.path.join(destination, dest)
                 else:
                     dest = None
@@ -146,7 +149,7 @@ def link(src, destination, recursive, force):
 @cli.command(help='Creates a SYMLINK to SRC from DST, where DST is '
                   'evaluated relative to the root of your notebook '
                   'contents.')
-@click.argument('src', type=click.Path(exists=True), nargs=-1)
+@click.argument('src', type=click.Path(exists=True))
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
                    'content directory, to which SRC is copied.')
@@ -168,6 +171,7 @@ def symlink(src, destination, recursive, force):
             for name in filenames:
                 if destination:
                     dest = os.path.join(os.path.relpath(dirpath, src), name)
+                    dest = os.path.normpath(dest)
                     dest = os.path.join(destination, dest)
                 else:
                     dest = None
@@ -247,9 +251,11 @@ def newnote(date, title, markup):
 @cli.command(help='Creates a new appendix in the currently loaded '
                   'notebook, with name TITLE.')
 @click.argument('title', type=click.STRING)
-def newappendix(title):
+@click.option('--markup', '-m', default='md', type=click.Choice(['md','rst','html']),
+              help='Markup format to use for the note.')
+def newappendix(title, markup):
     check_if_loaded(cur_notebook)
-    cur_notebook.newpage(title)
+    cur_notebook.newpage(title, markup)
 
 
 @cli.command(help='If a note exists for today in the currently loaded '
