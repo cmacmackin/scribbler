@@ -89,9 +89,7 @@ class ScribblerDatabase(object):
                 raise ScribblerError('Notebook `{}` already exists at location {}'.format(nb.name, location)) 
         if os.path.isfile(location):
             raise ScribblerError('Location {} exists but is not a directory'.format(location))
-        print 1
         nb = create_notebook(name, location)
-        print 2
         nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(name))
         nb.save(nb_file)
     

@@ -49,9 +49,9 @@ def setup_module():
     global note
     global page
     NB = namedtuple('Notebook', ['PDF_DIR', 'HTML_DIR', 'NOTE_DIR',
-                                 'APPE_DIR', 'location',])
+                                 'APPE_DIR', 'location', 'pdf_settings'])
     nb = NB(Notebook.PDF_DIR, Notebook.HTML_DIR, Notebook.NOTE_DIR,
-            Notebook.APPE_DIR, location)
+            Notebook.APPE_DIR, location, {'page-size': 'A4'})
     with patch('scribbler.content.ScribblerContent.update') as p:
         note = ScribblerContent('Monday', '2015-10-19', 
                                 os.path.join(nb.NOTE_DIR, '2015-10-19-monday.md'), nb)

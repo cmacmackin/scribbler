@@ -72,14 +72,14 @@ def cli():
 
 
 @cli.command(help='Copies SRC to the appropriate location within the '
-                  'content directory of your notebook. Unless '
-                  'otherwise specified, files will be placed in the '
-                  'directory corresponding to their file type, as '
-                  'specified in the notebook\'s YAML file.')
+                  'files directory of your notebook. Unless '
+                  'the `-d/--destination` flag is used, files will be '
+                  'placed in the directory corresponding to their file '
+                  'type, as specified in the notebook\'s YAML file.')
 @click.argument('src', type=click.Path(exists=True))
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
-                   'content directory, to which SRC is copied.')
+                   'files directory, to which SRC is copied.')
 @click.option('--recursive', '-R', is_flag=True,
               help='Copy the contents of directories recursively. If a '
                    'destination is specified then the directory tree '
@@ -108,13 +108,16 @@ def copy(src, destination, recursive, force):
     else:
         add_file(cur_notebook.copy_in, src, destination, force=force)
 
-@cli.command(help='Creates a hard link to SRC, located in DST, where '
-                  'DST is evaluated relative to the root of your '
-                  'notebook contents.')
+
+@cli.command(help='Creates a hard link to SRC in the files directory '
+                  'of your notebook. Unless the `-d/--destination` '
+                  'flag is used, links will be placed in the directory '
+                  'corresponding to their file type, as specified in '
+                  'the notebook\'s YAML file.')
 @click.argument('src', type=click.Path(exists=True))
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
-                   'content directory, to which SRC is copied.')
+                   'files directory, for the link to be placed.')
 @click.option('--recursive', '-R', '-r', is_flag=True,
               help='Link the contents of directories recursively. If a '
                    'destination is specified then the directory tree '
@@ -144,9 +147,10 @@ def link(src, destination, recursive, force):
         add_file(cur_notebook.link_in, src, destination, force=force)
 
 
-@cli.command(help='Creates a SYMLINK to SRC from DST, where DST is '
-                  'evaluated relative to the root of your notebook '
-                  'contents.')
+@cli.command(help='Creates a symlink to SRC. Unless the '
+                  '`-d/--destination`  flag is used, links will be '
+                  'placed in the directory corresponding to their file '
+                  'type, as specified in the notebook\'s YAML file.')
 @click.argument('src', type=click.Path(exists=True))
 @click.option('-d','--destination', type=click.Path(),
               help='Destination, relative to the root of the notebook '
@@ -213,14 +217,10 @@ def unload():
     scribbler.unload()
 
 
-#~ @cli.command()
-#~ def status():
-    #~ pass
-
 @cli.command(help='Lists all notebooks known to Scribbler.')
-def list():
+def notebooks():
     click.echo('The following notebooks are known to Scribbler:\n')
-    form = '\t{:24}\t{}'
+    form = '    {:24}  {}'
     for nb in scribbler:
         click.echo(form.format(nb.name, nb.location))
 
@@ -233,36 +233,113 @@ def build():
     scribbler.save(cur_notebook)
 
 
-@cli.command(help='Creates a new note in the currently loaded notebook.')
+@cli.command(help='Creates a new note or appendix in the currently '
+                  'loaded notebook.')
 @click.option('--date', '-d', default=dt.strftime('%Y-%m-%d %H:%M'),
-              help='Date to use for the new article, in format "YYYY-MM-DD HH:mm".')
+              help='Date to use for the new note, in format "YYYY-MM-DD HH:mm". '
+                   'Default: today\'s date.')
 @click.option('--title', '-t', default=dt.strftime('%A'),
-              help='Title of the new article.')
+              help='Title of the new note/appendix. Default: current day of week.')
 @click.option('--markup', '-m', default='md', type=click.Choice(['md','rst','html']),
-              help='Markup format to use for the note.')
-def newnote(date, title, markup):
+              help='Markup format to use for the note. Default: md.')
+@click.option('--note/--appendix', default=True,
+              help='Whether to create a note or an appendix. Default: note.')
+def new(date, title, markup, note):
     check_if_loaded(cur_notebook)
-    path = cur_notebook.newnote(date,title,markup)
+    if note:
+        path = cur_notebook.newnote(date,title,markup)
+    else:
+        path = cur_notebook.newpage(title, markup)
+    scribbler.save(cur_notebook)
     click.launch(path)
 
 
-@cli.command(help='Creates a new appendix in the currently loaded '
-                  'notebook, with name TITLE.')
-@click.argument('title', type=click.STRING)
-@click.option('--markup', '-m', default='md', type=click.Choice(['md','rst','html']),
-              help='Markup format to use for the note.')
-def newappendix(title, markup):
+@cli.command(help='Registers an existing file at PATH as a note or '
+                  'appendix.')
+@click.argument('path', type=click.Path(exists=True))
+@click.option('--title', '-t', default=dt.strftime('%A'),
+              help='Title of the note/appendix. Default: current day of week.')
+@click.option('--date', '-d', default=dt.strftime('%Y-%m-%d %H:%M'),
+              help='Date to use for the new note, in format "YYYY-MM-DD HH:mm". '
+                   'Default: today\'s date.')
+@click.option('--overwrite/--no-overwrite', default=False,
+              help='Overwrite an existing record for this file. '
+                   'Default: no-overwrite.')
+@click.option('--note/--appendix', default=True,
+              help='Whether to create a note or an appendix. Default: note.')
+def add(path, title, overwrite, note):
     check_if_loaded(cur_notebook)
-    cur_notebook.newpage(title, markup)
+    if note:
+        cur_notebook.addnote(date,title,path,overwrite)
+    else:
+        cur_notebook.addpage(title,path,overwrite)
+    scribbler.save(cur_notebook)
 
 
-@cli.command(help='If a note exists for today in the currently loaded '
-                  'notebook and a PDF version exists, open it. If the '
-                  'PDF does not exist, then the PDF will be created '
-                  'and then opened. If no note for today exists, then '
-                  'Scribbler will offer to create it for you.')
-def today():
-    click.secho('Not yet implemented.', fg='red', bold=True)
+@cli.command(help='Opens the source file(s) for note(s) with date or '
+                  'title corresponding to IDENT.')
+@click.argument('ident', type=click.STRING)
+@click.option('--date/--title', default=True,
+              help='Whether IDENT is the date or title to search for. Default: date.')
+@click.option('--note/--appendix', default=True,
+              help='Whether searches for a note or an appendix '
+                   'matching IDENT. Default: note.')
+def src(ident, date, notes):
+    check_if_loaded(cur_notebook)
+    note_files = note_from_ident(ident, date, notes)
+    if len(note_files) == 0:
+        click.echo('No matches found.')
+        sys.exit(1)
+    for n in note_files:
+        click.launch(os.path.join(cur_notebook.location, n.src_path))
+
+
+@cli.command(help='Opens the HTML file(s) for note(s) with date or '
+                  'title corresponding to IDENT.')
+@click.argument('ident', type=click.STRING)
+@click.option('--date/--title', default=True,
+              help='Whether IDENT is the date or title to search for. Default: date.')
+@click.option('--note/--appendix', default=True,
+              help='Whether searches for a note or an appendix '
+                   'matching IDENT. Default: note.')
+def html(ident, date, notes):
+    check_if_loaded(cur_notebook)
+    note_files = note_from_ident(ident, date, notes)
+    if len(note_files) == 0:
+        click.echo('No matches found.')
+        sys.exit(1)
+    rebuild = False
+    for n in note_files:
+        rebuild = rebuild or not n.html_path
+    if rebuild:
+        cur_notebook.build()
+        note_files = note_from_ident(ident, date, notes)
+    for n in note_files:
+        click.launch(os.path.join(cur_notebook.location, n.html_path))
+
+
+@cli.command(help='Opens the PDF file(s) for note(s) with date or '
+                  'title corresponding to IDENT.')
+@click.argument('ident', type=click.STRING)
+@click.option('--date/--title', default=True,
+              help='Whether IDENT is the date or title to search for. Default: date.')
+@click.option('--note/--appendix', default=True,
+              help='Whether searches for a note or an appendix '
+                   'matching IDENT. Default: note.')
+def pdf(ident, date, notes):
+    check_if_loaded(cur_notebook)
+    note_files = note_from_ident(ident, date, notes)
+    if len(note_files) == 0:
+        click.echo('No matches found.')
+        sys.exit(1)
+    rebuild = False
+    for n in note_files:
+        rebuild = rebuild or not n.pdf_path
+    if rebuild:
+        cur_notebook.build()
+        note_files = note_from_ident(ident, date, notes)
+    for n in note_files:
+        click.launch(os.path.join(cur_notebook.location, n.pdf_path))
 
 
 @cli.command(help='Launches the currently loaded notebook\'s directory '
@@ -270,6 +347,33 @@ def today():
 def cd():
     check_if_loaded(cur_notebook)
     click.launch(cur_notebook.location)
+
+
+@cli.command(help='Lists the contents of the currently loaded notebook.')
+def list():
+    check_if_loaded(cur_notebook)
+    click.echo('Notebook: ' + cur_notebook.name)
+    click.echo('Location: ' + cur_notebook.location)
+    click.echo()
+    if len(cur_notebook.notes) == 0:
+        numnotes = 'Contains no notes.'
+    elif len(cur_notebook.notes) == 1:
+        numnotes = 'Contains 1 note:'
+    else:
+        numnotes = 'Contains {} notes:'.format(len(cur_notebook.notes))
+    click.echo(numnotes)
+    for note in sorted(cur_notebook.notes.values(), key=lambda n: n.slug):
+        click.echo('    {:10}  {:22}  {}'.format(note.date, note.name, note.src_path))
+    click.echo()
+    if len(cur_notebook.appendices) == 0:
+        numappe = 'Contains no appendices.'
+    elif len(cur_notebook.appendices) == 1:
+        numappe = 'Contains 1 appendix:'
+    else:
+        numappe = 'Contains {} appendices:'.format(len(cur_notebook.appendices))
+    click.echo(numappe)
+    for appe in sorted(cur_notebook.appendices.values(), key=lambda a: a.slug):
+        click.echo('    {:22}  {}'.format(appe.name, appe.src_path))
 
 
 def add_file(method, src, dest, nb=cur_notebook, force=False):
@@ -285,7 +389,6 @@ def add_file(method, src, dest, nb=cur_notebook, force=False):
         Computes what the new path within the notebook would be for
         that name.
         """
-        print nb.get_destination(src, dest)
         return os.path.join(os.path.dirname(nb.get_destination(src, dest)), newname)
 
     try:
@@ -310,3 +413,24 @@ def add_file(method, src, dest, nb=cur_notebook, force=False):
                 return
             else:
                 add_file(method, src, newpath(newname), nb)
+
+def note_from_ident(ident, date=True, notes=True):
+    """
+    Iterates through notes and returns a list of any matching IDENT.
+    If DATE is True then IDENT must match the date. Otherwise, IDENT
+    must match the title. If NOTES is False then will search them
+    instead and IDENT is assumed to be the title.
+    """
+    check_if_loaded(cur_notebook)
+    note_files = []
+    if date:
+        m = 'date'
+    else:
+        m = 'name'
+    if not notes:
+        for appe in cur_notebook.appendices.values():
+            if appe.name == ident: note_files.append(appe)
+    else:
+        for note in cur_notebook.notes.values():
+            if getattr(note, m) == ident: note_files.append(note)
+    return note_files

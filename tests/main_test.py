@@ -126,6 +126,18 @@ def newappendix_test(newpage):
     result = runner.invoke(scr.cli, ['newappendix', '-m', m, t])
     newpage.assert_called_with(t, m)
 
+@patch('scribbler.notebook.Notebook.addpage')
+@patch('scribbler.check_if_loaded', lambda x: None)
+def addappendix_test(addpage):
+    """
+    Tests creation of adding a page record using `scribbler addappendix`.
+    """
+    runner = CliRunner()
+    t = '"a b c d e"'
+    p = 'test_notebook/notes/2015-10-19-monday.md'
+    result = runner.invoke(scr.cli, ['addappendix', p, t])
+    addpage.assert_called_with(t, p, False)
+
 @patch('scribbler.notebook.Notebook.newnote')
 @patch('scribbler.check_if_loaded', lambda x: None)
 def newnote_test(newnote):
@@ -148,6 +160,30 @@ def newnote_test(newnote):
     except AssertionError:
         d -= timedelta(minutes=1)
         newnote.assert_called_with(d.strftime('%Y-%m-%d %H:%M'), d.strftime('%A'), m)
+
+@patch('scribbler.notebook.Notebook.addnote')
+@patch('scribbler.check_if_loaded', lambda x: None)
+def addnote_test(addnote):
+    """
+    Tests registering existin file as note using `scribbler addnote`.
+    """    
+    runner = CliRunner()
+    t = '"a b c d e"'
+    d = datetime.now()
+    p = 'test_notebook/notes/2015-10-19-monday.md'
+    result = runner.invoke(scr.cli, ['addnote', '-t', t, p])
+    try:
+        addnote.assert_called_with(d.strftime('%Y-%m-%d %H:%M'), t, p, False) 
+    except AssertionError:
+        d -= timedelta(minutes=1)
+        addnote.assert_called_with(d.strftime('%Y-%m-%d %H:%M'), t, p, False)
+    result = runner.invoke(scr.cli, ['addnote', '--overwrite', p])
+    try:
+        addnote.assert_called_with(d.strftime('%Y-%m-%d %H:%M'), d.strftime('%A'), p, True) 
+    except AssertionError:
+        d -= timedelta(minutes=1)
+        addnote.assert_called_with(d.strftime('%Y-%m-%d %H:%M'), d.strftime('%A'), p, True)
+
 
 @patch('scribbler.database.ScribblerDatabase.save')
 @patch('scribbler.notebook.Notebook.build')
@@ -337,10 +373,8 @@ def add_file_test(isfile, getdest):
 
     def side_effect1(*args):
         if not args[3]:
-            print 1
             raise OSError
         else:
-            print 2
             pass
             
     method = MagicMock()
@@ -377,6 +411,14 @@ def add_file_test(isfile, getdest):
     getdest.return_value = 'out/dest.txt'
     isfile.side_effect=[True, False]
     result = runner.invoke(click_mock, ['src', 'out/dest.txt'], input='\n\n')
-    print result.output
     method.assert_called_with(scr.cur_notebook, 'src', 'out/dest-1.txt', False)
-    
+
+def status_test():
+    """
+    Checks that `scribbler status` outputs a list of notes and appendices.
+    """
+    runner = CliRunner()
+    result = runner.invoke(scr.cli, ['status'])
+    expected = 'Notebook: test notebook\nLocation: /home/chris/Code/scribbler/'\
+               'tests/test_notebook\n\nContains 2 notes:'
+    assert expected in result.output

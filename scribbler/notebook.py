@@ -37,9 +37,9 @@ from glob import glob
 from pelican.utils import slugify
 import yaml
 import pdfkit
-from PyPDF2 import PdfFileMerger
+from scribbler.PyPDF2 import PdfFileMerger
 
-from .errors import ScribblerWarning
+from .errors import ScribblerWarning, ScribblerError
 from .content import ScribblerContent
 
 class Notebook(object):
@@ -157,11 +157,13 @@ class Notebook(object):
         #~ 'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
     }
     PDF_SETTINGS = {
-        'margin-top': '0.9in',
-        'margin-right': '0.0in',
-        'margin-bottom': '0.9in',
-        'margin-left': '0.0in',
+        #~ 'margin-top': '0.9in',
+        #~ 'margin-right': '0.0in',
+        #~ 'margin-bottom': '0.9in',
+        #~ 'margin-left': '0.0in',
         'quiet': '',
+        'print-media-type': '',
+        'javascript-delay': '2500',
     }
     
     def __init__(self, name, location):
@@ -213,14 +215,17 @@ class Notebook(object):
         file_settings = yaml.load(settings_file)
         settings = copy(self.DEFAULT_SETTINGS)
         settings.update(file_settings)
+        if isinstance(settings['description'], unicode):
+            settings['description'] = str(settings['description'])
         for key, val in settings.iteritems():
             if key in self.DEFAULT_SETTINGS and not isinstance(val,type(self.DEFAULT_SETTINGS[key])):
-                raise TypeError('Key "{}" in settings of type {}'.format(key,type(val).__name__))
+                raise TypeError('Key "{}" in settings has value of type {}'.format(key,type(val).__name__))
         tmp = settings['filetypes']
         settings['filetypes'] = copy(self.FILETYPES)
         settings['filetypes'].update(tmp)
         settings['markdown extensions'].extend(self.MARKDOWN_PLUGINS)
         settings['plugins'] = copy(self.PELICAN_PLUGINS) + settings['plugins']
+        settings['bibfile'] = os.path.join(self.location, settings['bibfile'])
         self._settings = settings
         self.settings_mod_time = yaml_time
         return settings
@@ -412,7 +417,7 @@ class Notebook(object):
             out.close()
             os.remove(path)
             raise e
-        self.notes[basename] = ScribblerContent(title, date, 
+        self.notes[basename] = ScribblerContent(title, date[0:10], 
                                                 os.path.join(self.NOTE_DIR, basename),
                                                 self)
         self.save(os.path.join(self.location, self.BACKUP_FILE))
@@ -452,19 +457,34 @@ class Notebook(object):
         self.save(os.path.join(self.location, self.BACKUP_FILE))
         return path
     
-    def add_note(self):
+    def addnote(self, date, title, path, overwrite=False):
         """
-        Add a record of a note in an existing file, not previously registered
-        with Scribbler.
+        Add a record of a note in an existing file (PATH), not previously
+        registered with Scribbler. Note has TITLE and DATE specified.
         """
-        raise NotImplementedError() #TODO: Add this feature
+        try:
+            datetime.strptime(date, '%Y-%m-%d')
+        except:
+            raise ValueError('Incorrectly formatted date; date format '
+                             'should be YYYY-MM-DD')
+        basename = os.path.relpath(os.path.abspath(path), os.path.join(self.location, self.NOTE_DIR))
+        if basename in self.notes and not overwrite:
+            raise ScribblerError('Note with file `{}` already exists.'.format(basename))
+        self.notes[basename] = ScribblerContent(title, date,
+                                    os.path.join(self.NOTE_DIR, basename), self)
+        self.save(os.path.join(self.location, self.BACKUP_FILE))
         
-    def add_page(self):
+    def addpage(self, title, path, overwrite=False):
         """
-        Add a record of a page/appendix in an existing file, not previously
-        registered with Scribbler.
+        Add a record of a page/appendix in an existing file (PATH), not
+        previously registered with Scribbler. Has the specified TITLE.
         """
-        raise NotImplementedError() #TODO: Add this feature
+        basename = os.path.relpath(path, os.path.join(self.location, self.APPE_DIR))
+        if basename in self.appendices and not overwrite:
+            raise ScribblerError('Note with file `{}` already exists.'.format(basename))
+        self.appendices[basename] = ScribblerContent(title, '????-??-??',
+                                        os.path.join(self.APPE_DIR, basename), self)
+        self.save(os.path.join(self.location, self.BACKUP_FILE))
         
     def list_contents(self):
         """
@@ -569,7 +589,6 @@ def create_notebook(name, location):
     if os.path.isdir(location):
         if not os.path.isfile(os.path.join(location, Notebook.SETTINGS_FILE)):
             with open(os.path.join(location, Notebook.SETTINGS_FILE), 'w') as f:
-                print 'why?'
                 f.write("# Notebook configuration file\n")
                 f.write("notebook name: {}".format(name))
         try:

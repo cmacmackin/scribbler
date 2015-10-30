@@ -52,6 +52,8 @@ class ScribblerContent(object):
         else:
             raise ScribblerError("Unrecognized extension for file '{}'".format(basename))
         self.src_path = src_path
+        self.html_path = None
+        self.pdf_path = None
         self.update()
     
     def _pdf_path(self):
@@ -59,7 +61,7 @@ class ScribblerContent(object):
         Returns the path where a PDF file is expected to be, relative to
         the notebook root.
         """
-        return os.path.join(self.notebook.PDF_DIR, self.slug + '.pdf')
+        return os.path.join(self.notebook.PDF_DIR, str(self.slug) + '.pdf')
     
     def _html_path(self):
         """
@@ -67,9 +69,9 @@ class ScribblerContent(object):
         the notebook root.
         """
         if os.path.basename(os.path.dirname(self.src_path)) == self.notebook.NOTE_DIR:
-            return os.path.join(self.notebook.HTML_DIR, self.notebook.NOTE_DIR, self.slug + '.html')
+            return os.path.join(self.notebook.HTML_DIR, self.notebook.NOTE_DIR, str(self.slug) + '.html')
         else:
-            return os.path.join(self.notebook.HTML_DIR, 'pages', self.slug + '.html')
+            return os.path.join(self.notebook.HTML_DIR, 'pages', str(self.slug) + '.html')
     
     def update(self):
         """

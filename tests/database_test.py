@@ -138,15 +138,16 @@ def teardown_save():
 
 @with_setup(setup_null, teardown_save)
 @patch('scribbler.database.ScribblerDatabase.__iter__', mock_iter)
-@patch('scribbler.notebook.Notebook.__init__', MagicMock(return_value=None))
+@patch('scribbler.database.create_notebook')
 @patch('scribbler.notebook.Notebook.save')
-def add_test(save):
+def add_test(save, create):
     """
     Checks that ScribblerDatabase.add() tries to create and save a notebook.
     """
+    create.return_value = Notebook('newnotebook', 'newnotebookdir')
     db.add('newnotebook', 'newnotebookdir')
-    Notebook.__init__.assert_called_with('newnotebook', 'newnotebookdir')
     save.assert_called_with(os.path.join(db.scribbler_dir, 'newnotebook.pkl'))
+    create.assert_called_with('newnotebook', 'newnotebookdir')
 
 @raises(ScribblerError)
 def add_exists_test():
@@ -281,6 +282,12 @@ def current_test():
     Checks ScribblerDatabase.current() returns correct notebook object.
     """
     assert db.current() == db.get('Test Notebook')
+
+def current_test():
+    """
+    Checks ScribblerDatabase.current() returns None if can not find current notebook's file.
+    """
+    assert db.current() == None
 
 @patch('scribbler.database.ScribblerDatabase.name_to_filename', mock_to_filename)
 def save_test():

@@ -36,6 +36,7 @@ from pickle import load
 
 from scribbler.notebook import *
 from scribbler.content import *
+from scribbler.errors import ScribblerError
 
 from mock import MagicMock, patch
 from nose.tools import *
@@ -356,21 +357,7 @@ def pelicanconf_test():
     assert nb.del_pelicanconf()
     assert not os.path.isfile(os.path.join(loc, nb.PELICANCONF_FILE))
     assert not nb.del_pelicanconf()
-
-@raises(NotImplementedError)
-def add_note_test():
-    """
-    Tests Notebook.add_note(), which is not yet implemented.
-    """
-    nb.add_note()
-    
-@raises(NotImplementedError)
-def add_page_test():
-    """
-    Tests Notebook.add_page(), which is not yet implemented.
-    """
-    nb.add_page()
-    
+        
 @raises(NotImplementedError)
 def list_test():
     """
@@ -540,6 +527,8 @@ def create_existing_test():
     testnb = create_notebook('test notebook', 'test_notebook')
     infile = open(os.path.join('test_notebook', nb.BACKUP_FILE), 'r')
     reloaded = load(infile)
+    print testnb.__dict__
+    print reloaded.__dict__
     assert testnb == reloaded
 
 def setup_build():
@@ -589,3 +578,59 @@ def equals_test():
     testnb.location = 'none'
     assert nb != testnb
     assert nb != 'string'
+
+@patch('scribbler.content.ScribblerContent.__init__')
+@patch('scribbler.notebook.Notebook.save', mock_save)
+def add_note_test(add):
+    """
+    Checks that Notebook.add_note() behaves correctly. 
+    """
+    testnb = Notebook('test notebook', 'test_notebook')
+    add.return_value = None
+    testnb.addnote('2015-10-27', 'Test', 'test.md')
+    add.assert_called_with('Test', '2015-10-27', '../../test.md', testnb)
+    testnb.addnote('2015-10-27', 'Test', 'test_notebook/notes/test.md')
+    add.assert_called_with('Test', '2015-10-27', 'test.md', testnb)
+    testnb.addnote('2015-10-27', 'Test 2', 'test_notebook/notes/test.md', True)
+    add.assert_called_with('Test 2', '2015-10-27', 'test.md', testnb)
+
+@raises(ValueError)
+def add_note_bad_date_test():
+    """
+    Checks error raised when malformed date passed to Notebook.add_note(). 
+    """
+    nb.addnote('2015-20-27', 'Test', 'test.md')
+
+@raises(ScribblerError)
+def add_note_existing_test():
+    """
+    Checks error raised when Notebook.add_note() tries to add a note in existing file. 
+    """
+    testnb = Notebook('test notebook', 'test_notebook')
+    testnb.notes['test.md'] = None
+    testnb.addnote('2015-10-27', 'Test', 'test_notebook/notes/test.md')
+    
+@patch('scribbler.content.ScribblerContent.__init__')
+@patch('scribbler.notebook.Notebook.save', mock_save)
+def add_page_test(add):
+    """
+    Tests Notebook.add_page() behave correctly.
+    """
+    testnb = Notebook('test notebook', 'test_notebook')
+    add.return_value = None
+    testnb.addpage('Test', 'test.md')
+    add.assert_called_with('Test', '????-??-??', '../../test.md', testnb)
+    testnb.addpage('Test', 'test_notebook/appendices/test.md')
+    add.assert_called_with('Test', '????-??-??', 'test.md', testnb)
+    testnb.addpage('Test 2', 'test_notebook/appendices/test.md', True)
+    add.assert_called_with('Test 2', '????-??-??', 'test.md', testnb)
+
+@raises(ScribblerError)
+def add_page_existing_test():
+    """
+    Checks error raised when Notebook.add_note() tries to add a note in existing file. 
+    """
+    testnb = Notebook('test notebook', 'test_notebook')
+    testnb.appendices['test.md'] = None
+    testnb.addpage('Test', 'test_notebook/appendices/test.md')
+    
