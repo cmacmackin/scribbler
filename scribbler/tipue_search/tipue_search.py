@@ -31,6 +31,7 @@ class Tipue_Search_JSON_Generator(object):
         self.context = context
         self.siteurl = settings.get('SITEURL')
         self.tpages = settings.get('TEMPLATE_PAGES')
+        self.relative = settings.get('RELATIVE_URLS')
         self.output_path = output_path
         self.json_nodes = []
 
@@ -52,12 +53,15 @@ class Tipue_Search_JSON_Generator(object):
         else:
             page_category = page.category.name
 
-        page_url = self.siteurl + '/' + page.url
+        if not self.relative:
+            page_url = self.siteurl + '/' + page.url
+        else:
+            page_url = page.url
 
         node = {'title': page_title,
                 'text': page_text,
                 'tags': page_category,
-                'url': page_url}
+                'loc': page_url}
 
         self.json_nodes.append(node)
 
@@ -77,7 +81,10 @@ class Tipue_Search_JSON_Generator(object):
         # Should set default category?
         page_category = ''
 
-        page_url = urljoin(self.siteurl, self.tpages[srclink])
+        if not self.relative:
+            page_url = urljoin(self.siteurl, self.tpages[srclink])
+        else:
+            page_url = sefl.tpages[srclink]
 
         node = {'title': page_title,
                 'text': page_text,

@@ -16,9 +16,9 @@ Modified by Chris MacMackin, May 17 2015
 
           var set = $.extend( {
           
-               'show'                   : 7,
+               'show'                   : 10,
                'newWindow'              : false,
-               'showURL'                : true,
+               'showURL'                : false,
                'minimumLength'          : 3,
                'descriptiveWords'       : 25,
                'highlightTerms'         : true,
