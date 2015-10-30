@@ -16,9 +16,9 @@ Modified by Chris MacMackin, May 17 2015
 
           var set = $.extend( {
           
-               'show'                   : 10,
+               'show'                   : 7,
                'newWindow'              : false,
-               'showURL'                : false,
+               'showURL'                : true,
                'minimumLength'          : 3,
                'descriptiveWords'       : 25,
                'highlightTerms'         : true,
@@ -332,7 +332,9 @@ Modified by Chris MacMackin, May 17 2015
                                         if (set.showURL)
                                         {  
                                              out += '<div class="tipue_search_content_url"><small><a href="' + fo[3] + '"' + tipue_search_w + '>' + fo[3] + '</a></small></div>';
-                                        }
+                                        } else {
+					     out += '<br>'
+					}
                                         
                                    }
                                    l_o++;     
