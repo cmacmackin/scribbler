@@ -50,22 +50,22 @@ used to handle all Python dependencies:
 ```
 git clone https://github.com/cmacmackin/scribbler.git
 cd scribbler
+./install-wkhtmltopdf.sh #Or can install form package manager (see below)
+sudo apt-get install libmagickwand-dev python-dev  #If using Ubuntu or Debian
 pip install .
 ```
 
-Note that the [pdfkit](https://github.com/JazzCore/python-pdfkit) library
-requires [wkhtmltopdf](http://wkhtmltopdf.org/) to be installed. Furthermore,
-the default version of `wkhtmltopdf` on Debian and Ubuntu-based Linux
-distributions has not been compiled with certain patches needed to provide
-full functionality. Most of this functionality is not important for Scribbler,
-except in two areas:
+Note that the version of [wkhtmltopdf](http://wkhtmltopdf.org/) on Debian and
+Ubuntu-based Linux distributions has not been compiled with certain patches
+needed to provide full functionality. Most of this functionality is not
+important for Scribbler, except in two areas:
 
 1. The inclusion of any links from the HTML in the PDF.
 2. Without the patched version, the text in the output is very small and
    difficult to read.
 
 For this reason, it is reccomended that you install a patched binary using
-[this script](https://github.com/JazzCore/python-pdfkit/blob/master/travis/before-script.sh).
+the `install-wkhtmltopdf.sh` script provided.
 
 ## Basic Use
 Scribbler manages a set of _notebooks_. You can create a notebook with
@@ -81,7 +81,7 @@ notebook-directory
 ├── appendices   # Files containing appendices to your notebook
 ├── files        # Images, PDFs, etc. which you wish to include in the notebook
 │   ├── ...      # The exact subdirectory structure depends on the notebook's configurations
-├── └── ...
+│   └── ...
 ├── html         # HTML output of the notebook
 ├── notebook.yml # A YAML file specifying the notebook's settings
 ├── notes        # Files containing individual notes
@@ -123,6 +123,11 @@ To produce the HTML and PDF versions of the notebook, simply run
 ```
 scribbler build
 ```
+Each PDF that is rendered will pause for 2.5 seconds in order to ensure that
+any math included in the note has sufficient time to be rendered by
+[MathJax](https://www.mathjax.org/). In order to avoid this time-penalty,
+PDFs will only be generated if no PDF exists already, or the note source
+file has been edited more recently than the existing PDF.
 
 These commands can be run from any directory. This means that if you are
 in the process of compiling some software and suddenly realise you want to
@@ -148,12 +153,114 @@ and the PDF version with
 ```
 scribbler pdf --title 'Note Title'
 ```
+Adding files to the notebook manually is possible but is not recommended,
+as Scribbler will not know the date or title and therefore will not be able
+to use the `src`, `html`, or `pdf` commands to open them.
 
 ## Writing Notes
+By default notes are written in
+[Markdown](https://daringfireball.net/projects/markdown/), although they may
+also be written in [reStructuredText](http://docutils.sourceforge.net/rst.html)
+or HTML. As Scribbler is just a wrapper for Pelican, it is strongly recommended
+that you read its documentation on
+[writing content](http://docs.getpelican.com/en/3.6.3/content.html). Note that
+what they refer to as "articles" are equivalent to notes and what they refer
+to as "pages" are equivalent to appendices. The Pelican syntax for internal
+links _will_ work with Scribbler, although Scribbler's directory structure
+is a little different. Whereas the root of the directory structure seen by
+Pelican is the `content` directory, for Scribbler it is the top level of the
+notebook's directory. However, links will only be generated to the contents of
+the `notes`, `appendices`, and `files` folders.
+
+### Markdown Extensions
+In addition to standard Markdown, various plugins are loaded providing
+extra functionality. Of particular note is 
+[Markdown Extra](https://pythonhosted.org/Markdown/extensions/extra.html),
+which provides syntax for such things as footnotes, tables, and more.
+[CodeHilite](https://pythonhosted.org/Markdown/extensions/code_hilite.html)
+provides syntax-highlighting for code-snippets, as described in the
+Pelican documentation.
+[figureAltCaption](https://github.com/jdittrich/figureAltCaption) will convert
+each image which stands in its own paragraph into a `<figure>` element, with
+the alt-text used as a caption. Other extra pieces of syntax which various
+plugins support is:
+
+- text between `^` characters will appear as superscript
+  ([MarkdownSuperscript](https://pypi.python.org/pypi/MarkdownSuperscript))
+- text between `~` characters will appear as subscript
+  ([MarkdownSubscript](https://pypi.python.org/pypi/MarkdownSuperscript))
+- Text between `++` markes will be placed in `<ins>` tags, while text between
+  `~~` markers will be placed in `<del>` tags. 
+  ([mdx_del_ins](https://github.com/aleray/mdx_del_ins))
+- Placing `[ ]` at the start of a list-item in an unordered list will render
+  an empty checkbox, while `[x]` will render a ticked checkbox (as in
+  [GitHub flavoured markdown](https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments))
+  ([markdown_checklist](https://github.com/FND/markdown-checklist))
+- Text between `???` markers will be placed between `<mark>` tags
+  ([MarkdownHighlight](https://github.com/ribalba/markdown.highlight))
+- Text of the form `{! filepath !}` will be replaced by the contents of the
+  file located at `filepath`. Note that, at the moment, this will only work
+  when absolute paths are provided.
+  ([markdown_include](https://pypi.python.org/pypi/markdown-include))
+
+### Pelican Extensions
+Additionally, several Pelican plugins are used to provide further
+functionality. These plugins can be used with reStructuredText and HTML content
+as well as Markdown.
+
+[render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math) provides support for LaTeX equations. In Markdown, inline math
+appears between dollar signs. However, there must be now white spacce before the
+ending `$` (i.e. `$x^2$` will render, but $ x^2 $ will not). Math appearing on
+its own line should use double dollar-signs (`$$`). `\begin{equation}` and
+`\end{equation}` can also be used and the equation can be labelled and
+referenced, as in actual LaTeX. Note that this depends on
+[MathJax](https://www.mathjax.org/) to work and will only render if there is
+an internet connection.
+
+The [pdf-img](https://github.com/cmacmackin/pdf-img) plugin, which I wrote
+specifically for Scribbler, allows PDF, PS, and EPS graphics to be used
+as the source for images. This plugin will simply scan through all images
+in each note and appendix. If it ends with the extension `pdf`, `ps`, or `eps`
+then it will create a PNG thumbnail of the first page of the document. This
+thumbnail will be inserted as the image source, while the image itself will
+act as a link to the original PDF/PS/EPS file.
+
+My [figure-ref](https://github.com/cmacmackin/figure-ref) plugin (also written
+for Scribbler) will look for any figures in the HTML output whose caption
+begins with the format `labelname :: `. This will be replaced by a figure
+number. Any references to `{#labelname}` in the rest of the note will also
+be replaced with the correct figure number.
+
+Finally, [pelican-cite](https://github.com/cmacmackin/pelican-cite) allows
+BibTeX-style referencing within your notes. If a `bibfile` is specified in
+your notebook settings then it will be used as a database of bibliographic
+data. This file may, optionally be provided or overridden on a per-note
+basis by adding the metadata `publications_src`. Inline references can then
+be provided with the syntax `[@bibtexkey]` (for author names with year in
+parentheses) or `[@@bibtexkey]` (for author names and year all in parentheses).
+The inline citation will act as a link to a full bibliography entry at the end
+of the note.
+
+
+## notebook.yml
 
 ## Command Line Interface
 
 ## To Do
+- [ ] Creade a Markdown plugin which allows references to tables and code
+	  blocks?
+- [ ] Add option to force recreation of some or all PDF files
+- [ ] Add a default to the `src`, `html`, and `pdf` commands that opens
+      notes for today.
+- [ ] Provide a way to rename and/or relocate an existing notebook
+- [ ] Send the output of the `list` command to a pager
+- [ ] Write better documentation
+- [ ] Reduce the font size
+- [ ] Create a command to delete notes/appendices
+- [ ] Create command to open `index.html` and `FullNotebook.pdf`
+- [ ] Make MathJax scripts local so they can be used faster
+- [ ] Change CSS so that `pre` content is line-wrapped when printed
+- [ ] Initialize markdown-include so that paths evaluated relative to notebook base
 
 # scribbler
 To date I have not been able to find a convenient piece of software with which
@@ -196,16 +303,3 @@ also provide a command to quickly copy a file into your notes.
 - [figureAltCaption](https://github.com/jdittrich/figureAltCaption), perhaps as
   a base from which to build my own plugin for creating and referencing figures?
 - [render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math)
-
-## ToDo:
-- [ ] Creade a Markdown plugin which allows references to tables and code
-	  blocks?
-- [ ] Add option to force recreation of some or all PDF files
-- [ ] Add a default to the `src`, `html`, and `pdf` commands that opens
-      notes for today.
-- [ ] Provide a way to rename and/or relocate an existing notebook
-- [ ] Send the output of the `list` command to a pager
-- [ ] Write better documentation
-- [ ] Reduce the font size
-- [ ] Create a command to delete notes/appendices
-- [ ] Create command to open `index.html` and `FullNotebook.pdf`
