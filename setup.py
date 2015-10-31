@@ -49,7 +49,7 @@ setup(
     install_requires = ['pelican','MarkdownSuperscript','MarkdownSubscript',
                         'mdx_del_ins','BeautifulSoup4','markdown-checklist',
                         'MarkdownHighlight','markdown-include','PyYAML',
-                        'pyPDF2', 'markdown', 'typogrify'],
+                        'pyPDF2', 'markdown', 'typogrify', 'Wand', 'pybtex'],
   entry_points = {
     'console_scripts': [
         'scribbler=scribbler:cli',
