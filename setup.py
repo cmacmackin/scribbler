@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
 from codecs import open  # To use a consistent encoding
 from os import path
-from scribbler import __version__
 
 here = path.abspath(path.dirname(__file__))
 
@@ -13,7 +12,7 @@ setup(
   name = 'scribbler',
   packages = ['scribbler'],
   include_package_data = True,
-  version = __version__,
+  version = 0.2.0,
   description = 'Scribbler (a Canadian term for a workbook) is a wrapper for Pelican which integrates various plugins to provide scientific note-taking software.',
   long_description = long_description,
   author = 'Chris MacMackin',
@@ -26,7 +25,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 5 - Alpha',
+        'Development Status :: 3 - Alpha',
 
         # Indicate who your project is intended for
         'Intended Audience :: End Users/Desktop',
@@ -43,14 +42,14 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        #'Programming Language :: Python :: 3',
+        #'Programming Language :: Python :: 3.3',
+        #'Programming Language :: Python :: 3.4',
     ],
     install_requires = ['pelican','MarkdownSuperscript','MarkdownSubscript',
                         'mdx_del_ins','BeautifulSoup4','markdown-checklist',
                         'MarkdownHighlight','markdown-include','PyYAML',
-                        'pyPDF2'],
+                        'pyPDF2', 'markdown', 'typogrify'],
   entry_points = {
     'console_scripts': [
         'scribbler=scribbler:cli',

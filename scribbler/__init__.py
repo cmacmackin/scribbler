@@ -41,9 +41,9 @@ import click
 
 from .database import ScribblerDatabase
 from .notebook import Notebook
-from .errors import ScribblerWarning
+from .errors import ScribblerWarning, ScribblerError
 
-__appname__    = "FORD"
+__appname__    = "scribbler"
 __author__     = "Chris MacMackin"
 __maintainer__ = "Chris MacMackin"
 __license__    = "GPLv3"
@@ -54,14 +54,15 @@ dt = datetime.datetime.now()
 scribbler = ScribblerDatabase(click.get_app_dir(__appname__))
 cur_notebook = scribbler.current()
 
+ERROR = click.style('ERROR: ', fg='red', bold=True)
+
 def check_if_loaded(notebook):
     """
     Raise an error message if no notebook is loaded.
     """
     if not isinstance(notebook,Notebook):
-        click.secho('Can not perform this operation: no notebook loaded.',
-                    fg='red')
-        click.echo('Load a notebook with:\t`scribbler load <notebook name>`')
+        click.echo(ERROR + 'Can not perform this operation because no notebook is loaded.')
+        click.echo('Load a notebook with `scribbler load <notebook name>`')
         sys.exit(1)
 
 
@@ -190,7 +191,10 @@ def symlink(src, destination, recursive, force):
 @click.argument('name', type=click.STRING)
 @click.argument('location', type=click.Path())
 def init(name, location):
-    scribbler.add(name, location)
+    try:
+        scribbler.add(name, location)
+    except ScribblerError as e:
+        click.echo(ERROR + str(e))
 
 
 @cli.command(help='Remove notebook NAME from Scribbler\'s records.')
@@ -198,16 +202,22 @@ def init(name, location):
 @click.confirmation_option(help='Are you sure you want to forget this '
                                 'notebook?')
 @click.option('--delete/--no-delete', default=False,
-              help='Delete the contents of the notebook.')
+              help='Delete the contents of the notebook. Default: no-delete')
 def forget(name, delete):
-    scribbler.delete(name, delete)
+    try:
+        scribbler.delete(name, delete)
+    except ScribblerError as e:
+        click.echo(ERROR + str(e))
 
 
 @cli.command(help='Load notebook NAME, meaning that Scribbler '
                   'operations will act on it.')
 @click.argument('name', type=click.STRING)
 def load(name):
-    scribbler.load(name)
+    try:
+        scribbler.load(name)
+    except ScribblerError as e:
+        click.echo(ERROR + str(e))
 
 
 @cli.command(help='Unload the currently loaded notebook from '
@@ -229,7 +239,10 @@ def notebooks():
                   'loaded notebook.')
 def build():
     check_if_loaded(cur_notebook)
-    cur_notebook.build()
+    try:
+        cur_notebook.build()
+    except ScribblerError as e:
+        click.echo(ERROR + str(e))
     scribbler.save(cur_notebook)
 
 
@@ -246,10 +259,14 @@ def build():
               help='Whether to create a note or an appendix. Default: note.')
 def new(date, title, markup, note):
     check_if_loaded(cur_notebook)
-    if note:
-        path = cur_notebook.newnote(date,title,markup)
-    else:
-        path = cur_notebook.newpage(title, markup)
+    try:
+        if note:
+            path = cur_notebook.newnote(date,title,markup)
+        else:
+            path = cur_notebook.newpage(title, markup)
+    except ScribblerError as e:
+        click.echo(ERROR + str(e))
+        sys.exit(1)
     scribbler.save(cur_notebook)
     click.launch(path)
 
@@ -269,10 +286,14 @@ def new(date, title, markup, note):
               help='Whether to create a note or an appendix. Default: note.')
 def add(path, title, overwrite, note):
     check_if_loaded(cur_notebook)
-    if note:
-        cur_notebook.addnote(date,title,path,overwrite)
-    else:
-        cur_notebook.addpage(title,path,overwrite)
+    try:
+        if note:
+            cur_notebook.addnote(date,title,path,overwrite)
+        else:
+            cur_notebook.addpage(title,path,overwrite)
+    except ScribblerError as e:
+        click.echo(ERROR + str(e))
+        sys.exit(1)
     scribbler.save(cur_notebook)
 
 
@@ -295,7 +316,8 @@ def src(ident, date, notes):
 
 
 @cli.command(help='Opens the HTML file(s) for note(s) with date or '
-                  'title corresponding to IDENT.')
+                  'title corresponding to IDENT. If HTML version does '
+                  'not exist, then will build it.')
 @click.argument('ident', type=click.STRING)
 @click.option('--date/--title', default=True,
               help='Whether IDENT is the date or title to search for. Default: date.')
@@ -312,7 +334,11 @@ def html(ident, date, notes):
     for n in note_files:
         rebuild = rebuild or not n.html_path
     if rebuild:
-        cur_notebook.build()
+        try:
+            cur_notebook.build()
+        except ScribblerError as e:
+            click.echo(ERROR + str(e))
+            sys.exit(1)
         note_files = note_from_ident(ident, date, notes)
     for n in note_files:
         click.launch(os.path.join(cur_notebook.location, n.html_path))
@@ -334,13 +360,21 @@ def pdf(ident, date, notes):
         sys.exit(1)
     rebuild = False
     for n in note_files:
-        rebuild = rebuild or not n.pdf_path
+        try:
+            rebuild = rebuild or not n.pdf_path
+        except ScribblerError as e:
+            click.echo(ERROR + str(e))
+            sys.exit(1)
     if rebuild:
         cur_notebook.build()
         note_files = note_from_ident(ident, date, notes)
     for n in note_files:
         click.launch(os.path.join(cur_notebook.location, n.pdf_path))
 
+@cli.command(help='Opens the YAML file containing the notebook\'s settings.')
+def settings():
+    check_if_loaded(cur_notebook)
+    click.launch(os.path.join(cur_notebook.location, cur_notebook.SETTINGS_FILE))
 
 @cli.command(help='Launches the currently loaded notebook\'s directory '
                   'in a file browser.')

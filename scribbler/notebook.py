@@ -398,7 +398,7 @@ class Notebook(object):
         try:
             datetime.strptime(date, '%Y-%m-%d %H:%M')
         except:
-            raise ValueError('Incorrectly formatted date; date format '
+            raise ScribblerError('Incorrectly formatted date; date format '
                              'should be YYYY-MM-DD HH:mm')
         name = date.split()[0] + '-' + slugify(title)
         for ext in MARKUP_OPTIONS:
@@ -465,7 +465,7 @@ class Notebook(object):
         try:
             datetime.strptime(date, '%Y-%m-%d')
         except:
-            raise ValueError('Incorrectly formatted date; date format '
+            raise ScribblerError('Incorrectly formatted date; date format '
                              'should be YYYY-MM-DD')
         basename = os.path.relpath(os.path.abspath(path), os.path.join(self.location, self.NOTE_DIR))
         if basename in self.notes and not overwrite:
@@ -594,6 +594,7 @@ def create_notebook(name, location):
         try:
             infile = open(os.path.join(location, Notebook.BACKUP_FILE), 'r')
             nb = load(infile)
+            nb.location = os.path.abspath(location)
         except:
             nb = Notebook(name, location)
         nb.update()

@@ -41,12 +41,113 @@ hand-written notes.
 "Scribbler" is a Canadian term (less-used now) for a school-child's notebook
 or workbook. Canadians will likely remember ones such as these from their
 elementary school days:
-
-
+![Hilroy notebooks, or "scribblers."](https://raw.githubusercontent.com/cmacmackin/scribbler/master/hilroy-scribbler.png)
 
 ## Installation
+Scribbler is not yet available on PyPI. However, the following process can be
+used to handle all Python dependencies:
+
+```
+git clone https://github.com/cmacmackin/scribbler.git
+cd scribbler
+pip install .
+```
+
+Note that the [pdfkit](https://github.com/JazzCore/python-pdfkit) library
+requires [wkhtmltopdf](http://wkhtmltopdf.org/) to be installed. Furthermore,
+the default version of `wkhtmltopdf` on Debian and Ubuntu-based Linux
+distributions has not been compiled with certain patches needed to provide
+full functionality. Most of this functionality is not important for Scribbler,
+except in two areas:
+
+1. The inclusion of any links from the HTML in the PDF.
+2. Without the patched version, the text in the output is very small and
+   difficult to read.
+
+For this reason, it is reccomended that you install a patched binary using
+[this script](https://github.com/JazzCore/python-pdfkit/blob/master/travis/before-script.sh).
 
 ## Basic Use
+Scribbler manages a set of _notebooks_. You can create a notebook with
+```
+scribbler init NAME LOCATION
+```
+This will cause Scribbler to add to its records a notebook with the title
+"NAME" and create the notebook directory hierarchy at "LOCATION". If a notebook
+hierarchy already exists there then Scribbler will attempt to use it. The
+notebook hierarchy is as follows:
+```
+notebook-directory
+├── appendices   # Files containing appendices to your notebook
+├── files        # Images, PDFs, etc. which you wish to include in the notebook
+│   ├── ...      # The exact subdirectory structure depends on the notebook's configurations
+├── └── ...
+├── html         # HTML output of the notebook
+├── notebook.yml # A YAML file specifying the notebook's settings
+├── notes        # Files containing individual notes
+└── pdf          # PDF output of the notebook
+```
+
+To see all notebooks known to scribbler, run
+```
+scribbler notebooks
+```
+In order to modify a notebook, it must be loaded into Scribbler. To do this
+run
+```
+scribbler load NAME
+```
+Notebooks can be unloaded with
+```
+scribbler unload
+```
+Any time `scribbler load`
+is run, any previously loaded notebooks will automatically be unloaded.
+
+The settings for the notebook can be edited using
+```
+scribbler settings
+```
+To create a new note, run
+```
+scribbler new -t 'Note Title'
+```
+which will create a note for today's date with the specified title and will
+open it in the system's text editor. Once you are done writing the note
+(see next section), save it and close the text editor. A list of all notes
+(as well as information about the notebook) can be printed with the command
+```
+scribbler list
+```
+To produce the HTML and PDF versions of the notebook, simply run
+```
+scribbler build
+```
+
+These commands can be run from any directory. This means that if you are
+in the process of compiling some software and suddenly realise you want to
+takes some notes about it, you can easily do so without having to navigate
+away from the compilation directory or open a new terminal.
+
+You can also add appendices. These are like notes, except that they don't
+have any date associated with them and will always be placed at the end of the
+notebook. They are created using almost exactly the same syntax as for notes:
+```
+scribbler new --appendix -t 'Note Title'
+```
+
+If you need to edit the note later, run
+```
+scribbler src --title 'Note Title'
+```
+You can view the HTML version of that note with
+```
+scribbler html --title 'Note Title'
+```
+and the PDF version with
+```
+scribbler pdf --title 'Note Title'
+```
 
 ## Writing Notes
 
@@ -106,3 +207,5 @@ also provide a command to quickly copy a file into your notes.
 - [ ] Send the output of the `list` command to a pager
 - [ ] Write better documentation
 - [ ] Reduce the font size
+- [ ] Create a command to delete notes/appendices
+- [ ] Create command to open `index.html` and `FullNotebook.pdf`
