@@ -324,9 +324,9 @@ def src(ident, date, notes):
 @click.option('--note/--appendix', default=True,
               help='Whether searches for a note or an appendix '
                    'matching IDENT. Default: note.')
-def html(ident, date, notes):
+def html(ident, date, note):
     check_if_loaded(cur_notebook)
-    note_files = note_from_ident(ident, date, notes)
+    note_files = note_from_ident(ident, date, note)
     if len(note_files) == 0:
         click.echo('No matches found.')
         sys.exit(1)
@@ -339,7 +339,7 @@ def html(ident, date, notes):
         except ScribblerError as e:
             click.echo(ERROR + str(e))
             sys.exit(1)
-        note_files = note_from_ident(ident, date, notes)
+        note_files = note_from_ident(ident, date, note)
     for n in note_files:
         click.launch(os.path.join(cur_notebook.location, n.html_path))
 
@@ -352,9 +352,9 @@ def html(ident, date, notes):
 @click.option('--note/--appendix', default=True,
               help='Whether searches for a note or an appendix '
                    'matching IDENT. Default: note.')
-def pdf(ident, date, notes):
+def pdf(ident, date, note):
     check_if_loaded(cur_notebook)
-    note_files = note_from_ident(ident, date, notes)
+    note_files = note_from_ident(ident, date, note)
     if len(note_files) == 0:
         click.echo('No matches found.')
         sys.exit(1)
@@ -367,7 +367,7 @@ def pdf(ident, date, notes):
             sys.exit(1)
     if rebuild:
         cur_notebook.build()
-        note_files = note_from_ident(ident, date, notes)
+        note_files = note_from_ident(ident, date, note)
     for n in note_files:
         click.launch(os.path.join(cur_notebook.location, n.pdf_path))
 

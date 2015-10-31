@@ -104,10 +104,10 @@ class Notebook(object):
                        'scribbler.slugcollision','scribbler.pelican-cite',
                        'scribbler.figure-ref']
     MARKDOWN_PLUGINS = ['scribbler.figureAltCaption','superscript',
-                        'markdown_checklist.extension','extra','subscript',
+                        'markdown_checklist.extension','extra',
                         'subscript','MarkdownHighlight.highlight',
                         'codehilite(css_class=highlight)','del_ins',
-                        'markdown_include.include']
+                        'markdown_include.include(base_path={})']
     FILETYPES = {
         'jpg': 'images',
         'jpeg': 'images',
@@ -224,7 +224,9 @@ class Notebook(object):
         settings['filetypes'] = copy(self.FILETYPES)
         settings['filetypes'].update(tmp)
         settings['markdown extensions'].extend(self.MARKDOWN_PLUGINS)
-        settings['plugins'] = copy(self.PELICAN_PLUGINS) + settings['plugins']
+        pplugins = copy(self.PELICAN_PLUGINS)
+        pplugins[-1] = pplugins[-1].format(self.location)
+        settings['plugins'] = pplugins + settings['plugins']
         settings['bibfile'] = os.path.join(self.location, settings['bibfile'])
         self._settings = settings
         self.settings_mod_time = yaml_time
