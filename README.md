@@ -296,7 +296,7 @@ and the following specifications can be set:
   (see [pelican-cite](https://github.com/cmacmackin/pelican-cite))
 - __filetypes__: a mapping describing where files with various extensions
   which Scribbler copies or links into the notebook will be placed. The entry
-  '*' designates the location for any files with unmatched extensions. If this
+  '\*' designates the location for any files with unmatched extensions. If this
   is set in the YAML file then it will not automatically override the default
   settings for all extensions--only those which are explicitly set in the YAML
   file. (_Default:_ {'jpg': 'images', 'jpeg': 'images', 'png': 'images',
@@ -308,6 +308,240 @@ and the following specifications can be set:
 - __paper__: the paper size to use for PDF output (_Default:_ "Letter")
 
 ## Command Line Interface
+Scribbler has the following CLI:
+
+    Usage: scribbler [OPTIONS] COMMAND [ARGS]...
+    
+    Options:
+      --version  Show the version and exit.
+      --help     Show this message and exit.
+    
+    Commands:
+      add        Registers an existing file at PATH as a note...
+      build      Creates the HTML and PDF output of the...
+      cd         Launches the currently loaded notebook's...
+      copy       Copies SRC to the appropriate location within...
+      forget     Remove notebook NAME from Scribbler's...
+      html       Opens the HTML file(s) for note(s) with date...
+      init       Create a new notebook with NAME.
+      link       Creates a hard link to SRC in the files...
+      list       Lists the contents of the currently loaded...
+      load       Load notebook NAME, meaning that Scribbler...
+      new        Creates a new note or appendix in the...
+      notebooks  Lists all notebooks known to Scribbler.
+      pdf        Opens the PDF file(s) for note(s) with date...
+      settings   Opens the YAML file containing the notebook's...
+      src        Opens the source file(s) for note(s) with...
+      symlink    Creates a symlink to SRC.
+      unload     Unload the currently loaded notebook from...
+
+The interface for each command is given in the following sections.
+
+### add
+    Usage: scribbler add [OPTIONS] PATH
+
+      Registers an existing file at PATH as a note or appendix.
+    
+    Options:
+      -t, --title TEXT              Title of the note/appendix. Default: current
+                                    day of week.
+      -d, --date TEXT               Date to use for the new note, in format "YYYY-
+                                    MM-DD HH:mm". Default: today's date.
+      --overwrite / --no-overwrite  Overwrite an existing record for this file.
+                                    Default: no-overwrite.
+      --note / --appendix           Whether to create a note or an appendix.
+                                    Default: note.
+      --help                        Show this message and exit.
+
+### build
+    Usage: scribbler build [OPTIONS]
+    
+      Creates the HTML and PDF output of the currently loaded notebook.
+    
+    Options:
+      --help  Show this message and exit.
+
+### cd
+    Usage: scribbler cd [OPTIONS]
+    
+      Launches the currently loaded notebook's directory in a file browser.
+    
+    Options:
+      --help  Show this message and exit.
+
+### copy
+    Usage: scribbler copy [OPTIONS] SRC
+    
+      Copies SRC to the appropriate location within the files directory of your
+      notebook. Unless the `-d/--destination` flag is used, files will be placed
+      in the directory corresponding to their file type, as specified in the
+      notebook's YAML file.
+    
+    Options:
+      -d, --destination PATH  Destination, relative to the root of the notebook
+                              files directory, to which SRC is copied.
+      -R, --recursive         Copy the contents of directories recursively. If a
+                              destination is specified then the directory tree
+                              will be reproduced there. Otherwise, the individual
+                              files will be placed in the default location for
+                              their filetype.
+      -f, --force             Overwrite files without asking permission first.
+      --help                  Show this message and exit.
+
+### forget
+    Usage: scribbler forget [OPTIONS] NAME
+    
+      Remove notebook NAME from Scribbler's records.
+    
+    Options:
+      --yes                   Are you sure you want to forget this notebook?
+      --delete / --no-delete  Delete the contents of the notebook. Default: no-
+                              delete
+      --help                  Show this message and exit.
+
+### html
+    Usage: scribbler html [OPTIONS] IDENT
+    
+      Opens the HTML file(s) for note(s) with date or title corresponding to
+      IDENT. If HTML version does not exist, then will build it.
+    
+    Options:
+      --date / --title     Whether IDENT is the date or title to search for.
+                           Default: date.
+      --note / --appendix  Whether searches for a note or an appendix matching
+                           IDENT. Default: note.
+      --help               Show this message and exit.
+
+### init
+    Usage: scribbler init [OPTIONS] NAME LOCATION
+    
+      Create a new notebook with NAME. If a notebook already exists in LOCATION
+      then it will be scanned for information. Otherwise, Scribbler will create
+      the necessary files.
+    
+    Options:
+      --help  Show this message and exit.
+
+### link
+    Usage: scribbler link [OPTIONS] SRC
+    
+      Creates a hard link to SRC in the files directory of your notebook. Unless
+      the `-d/--destination` flag is used, links will be placed in the directory
+      corresponding to their file type, as specified in the notebook's YAML
+      file.
+    
+    Options:
+      -d, --destination PATH  Destination, relative to the root of the notebook
+                              files directory, for the link to be placed.
+      -R, -r, --recursive     Link the contents of directories recursively. If a
+                              destination is specified then the directory tree
+                              will be reproduced there. Otherwise, the individual
+                              links will be placed in the default location for
+                              their filetype.
+      -f, --force             Overwrite files without asking permission first.
+      --help                  Show this message and exit.
+
+### list
+    Usage: scribbler list [OPTIONS]
+    
+      Lists the contents of the currently loaded notebook.
+    
+    Options:
+      --help  Show this message and exit.
+
+### load
+    Usage: scribbler load [OPTIONS] NAME
+    
+      Load notebook NAME, meaning that Scribbler operations will act on it.
+    
+    Options:
+      --help  Show this message and exit.
+
+### new
+    Usage: scribbler new [OPTIONS]
+    
+      Creates a new note or appendix in the currently loaded notebook.
+    
+    Options:
+      -d, --date TEXT             Date to use for the new note, in format "YYYY-
+                                  MM-DD HH:mm". Default: today's date.
+      -t, --title TEXT            Title of the new note/appendix. Default: current
+                                  day of week.
+      -m, --markup [md|rst|html]  Markup format to use for the note. Default: md.
+      --note / --appendix         Whether to create a note or an appendix.
+                                  Default: note.
+      --help                      Show this message and exit.
+
+### notebooks
+    Usage: scribbler notebooks [OPTIONS]
+    
+      Lists all notebooks known to Scribbler.
+    
+    Options:
+      --help  Show this message and exit.
+
+### pdf
+    Usage: scribbler pdf [OPTIONS] IDENT
+    
+      Opens the PDF file(s) for note(s) with date or title corresponding to
+      IDENT.
+    
+    Options:
+      --date / --title     Whether IDENT is the date or title to search for.
+                           Default: date.
+      --note / --appendix  Whether searches for a note or an appendix matching
+                           IDENT. Default: note.
+      --help               Show this message and exit.
+
+### settings
+    Usage: scribbler settings [OPTIONS]
+    
+      Opens the YAML file containing the notebook's settings.
+    
+    Options:
+      --help  Show this message and exit.
+
+### src
+    Usage: scribbler src [OPTIONS] IDENT
+    
+      Opens the source file(s) for note(s) with date or title corresponding to
+      IDENT.
+    
+    Options:
+      --date / --title     Whether IDENT is the date or title to search for.
+                           Default: date.
+      --note / --appendix  Whether searches for a note or an appendix matching
+                           IDENT. Default: note.
+      --help               Show this message and exit.
+
+### symlink
+    Usage: scribbler symlink [OPTIONS] SRC
+    
+      Creates a symlink to SRC. Unless the `-d/--destination`  flag is used,
+      links will be placed in the directory corresponding to their file type, as
+      specified in the notebook's YAML file.
+    
+    Options:
+      -d, --destination PATH  Destination, relative to the root of the notebook
+                              content directory, to which SRC is copied.
+      -R, -r, --recursive     Link the contents of directories recursively. If a
+                              destination is specified then the directory tree
+                              will be reproduced there. Otherwise, the individual
+                              links will be placed in the default location for
+                              their filetype. If this option is not specified and
+                              SRC is a directory, then a link will be made to a
+                              directory itself.
+      -f, --force             Overwrite files without asking permission first.
+      --help                  Show this message and exit.
+
+### unload
+    Usage: scribbler unload [OPTIONS]
+    
+      Unload the currently loaded notebook from Scribbler. Scribbler commands
+      will no longer work on a notebook.
+    
+    Options:
+      --help  Show this message and exit.
 
 ## Disclaimer
 Scribbler is extremely new and still evolving. I make absolutely no guarantees
@@ -330,7 +564,7 @@ welcome.
       notes for today.
 - [ ] Provide a way to rename and/or relocate an existing notebook
 - [ ] Send the output of the `list` command to a pager
-- [ ] Write better documentation
+- [x] Write better documentation
 - [ ] Reduce the font size
 - [ ] Create a command to delete notes/appendices
 - [ ] Create command to open `index.html` and `FullNotebook.pdf`
