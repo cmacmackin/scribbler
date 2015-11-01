@@ -210,7 +210,7 @@ as well as Markdown.
 
 [render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math) provides support for LaTeX equations. In Markdown, inline math
 appears between dollar signs. However, there must be now white spacce before the
-ending `$` (i.e. `$x^2$` will render, but $ x^2 $ will not). Math appearing on
+ending `$` (i.e. `$x^2$` will render, but `$ x^2 $` will not). Math appearing on
 its own line should use double dollar-signs (`$$`). `\begin{equation}` and
 `\end{equation}` can also be used and the equation can be labelled and
 referenced, as in actual LaTeX. Note that this depends on
@@ -241,10 +241,86 @@ parentheses) or `[@@bibtexkey]` (for author names and year all in parentheses).
 The inline citation will act as a link to a full bibliography entry at the end
 of the note.
 
-
 ## notebook.yml
+Settings for your notebook are stored in a file called "notebook.yml" at the
+root of your notebook directory. Scribbler can open this for you using the
+command `scribbler settings`. This file contains [YAML](http://yaml.org/)
+and the following specifications can be set:
+
+- __author__: name of the author of the notebook (_Default:_ "No Author")
+- __notebook name__: the name of your notebook to appear in the output. Note
+  that this is distinct by the name which Scribbler uses to identify your
+  notebook from the command line. (_Default:_ "A Scribbler Notebook")
+- __timezone__: the timezone which will be used for dates (_Default:_ "Etc/UCT")
+- __language__: the language notes will be written in (_Default:_ "en")
+- __links__: a list of links to appear in the sidebar of the HTML notebook.
+  Each link should be a two-item list where the first item is the text to
+  display in the link and the second item is the URL.
+- __email__: the author's email address
+- __description__: a description of the notebook. This should be formatted in
+  HTML.
+- __address__: whether to display the author's address information in the output
+  (_Default:_ False)
+- __street address__: the author's street address
+- __city__: the author's city
+- __region__: the author's region (e.g. state or province)
+- __postal__: the author's postal or zip code
+- __country__: the author's country
+- __plugins__: a list of any additional
+  [Pelican plugins](https://github.com/getpelican/pelican-plugins) which
+  the author wants to be used. These must be located somewhere in the Python
+  path.
+  [render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math),
+  [tipue_search](https://github.com/getpelican/pelican-plugins/tree/master/tipue_search),
+  [neighbours](https://github.com/getpelican/pelican-plugins/tree/master/neighbors),
+  [pdf-img](https://github.com/cmacmackin/pdf-img),
+  [slugcollision](https://github.com/leofiore/pelican-plugins/tree/master/slugcollision),
+  [pelican-cite](https://github.com/cmacmackin/pelican-cite),
+  and [figure-ref](https://github.com/cmacmackin/figure-ref) will always be
+  loaded. Note that the versions of render\_math and tipue\_search used by
+  Scribbler have been slightly modified from the originals.
+- __markdown extensions__: a list of any additional
+  [Markdown extensions](https://pythonhosted.org/Markdown/extensions/) to be
+  used. These must be located in the Python path. The
+  [Markdown Extra](https://pythonhosted.org/Markdown/extensions/extra.html),
+  [CodeHilite](https://pythonhosted.org/Markdown/extensions/code_hilite.html),
+  [figureAltCaption](https://github.com/jdittrich/figureAltCaption),
+  [MarkdownSuperscript](https://pypi.python.org/pypi/MarkdownSuperscript),
+  [MarkdownSubscript](https://pypi.python.org/pypi/MarkdownSuperscript),
+  [mdx_del_ins](https://github.com/aleray/mdx_del_ins),
+  [markdown_checklist](https://github.com/FND/markdown-checklist),
+  [MarkdownHighlight](https://github.com/ribalba/markdown.highlight),
+  and [markdown_include](https://pypi.python.org/pypi/markdown-include)
+  extensions will always be loaded.
+- __bibfile__: a BibTeX file whose contents will be made available to cite
+  (see [pelican-cite](https://github.com/cmacmackin/pelican-cite))
+- __filetypes__: a mapping describing where files with various extensions
+  which Scribbler copies or links into the notebook will be placed. The entry
+  '*' designates the location for any files with unmatched extensions. If this
+  is set in the YAML file then it will not automatically override the default
+  settings for all extensions--only those which are explicitly set in the YAML
+  file. (_Default:_ {'jpg': 'images', 'jpeg': 'images', 'png': 'images',
+  'gif': 'images', 'eps': 'images', 'svg': 'images', 'pdf': 'pdfs',
+  'ps': 'pdfs', 'dvi': 'pdfs', 'tar.gz': 'archives', 'tar.bz': 'archives',
+  'tar.bz2': 'archives', 'tar.xz': 'archives', 'tar': 'archives',
+  'rar': 'archives', 'zip': 'archives', 'rtp': 'archives', 'deb': 'archives',
+  '*': 'attachments'})
+- __paper__: the paper size to use for PDF output (_Default:_ "Letter")
 
 ## Command Line Interface
+
+## Disclaimer
+Scribbler is extremely new and still evolving. I make absolutely no guarantees
+regarding its stability. If you find a bug, please do let me know through
+GitHub's issue reporting mechanism.
+
+Scribbler was written to meet my needs. I have placed it on GitHub in case
+anyone else can get some use out of it. However, I am not intending to devote
+much more time to Scribbler other than for addressing the To Do list below. As
+such, I am unlikely to respond to feature requests. It doesn't hurt to suggest
+them, but unless it is something which I would use myself, I'm not likely to
+implement it. Pull requests implementing new features, on the other hand, are
+welcome.
 
 ## To Do
 - [ ] Creade a Markdown plugin which allows references to tables and code
@@ -262,44 +338,3 @@ of the note.
 - [ ] Change CSS so that `pre` content is line-wrapped when printed
 - [ ] Initialize markdown-include so that paths evaluated relative to notebook base
 
-# scribbler
-To date I have not been able to find a convenient piece of software with which
-to take down notes about my scientific research. To this end, I have created
-scribbler ("scribbler" being a Canadian term for a notebook or workbook). To
-meet my requirements for scientific note-taking, it should do the following:
-
-1. Allow notes to be written in Markdown
-2. Be able to handle LaTeX equations
-3. Be able to include PDF and/or PS figures
-4. Provide a BibTeX reference system
-5. Export to printable PDF files
-6. Preferably be able to export to HTML as well
-7. Handle code-snippets, with syntax highlighting
-8. Be able to sort entries by date
-9. Provide captions for images, with a referencing system
-1. Be able to parse settings from a YAML file
-
-The [Pelican](http://blog.getpelican.com/) static site generator already
-provides numbers 1, 2 (with a plugin), 6, 7, and 8. Item 9 can be handled
-by writing a plugin for Markdown. Item 3 can be handled by a Pelican plugin.
-Item 4 could be handled by a plugin for either of these systems. Item 3 can
-be achieved by using [pdfkit](https://github.com/JazzCore/python-pdfkit) to
-convert Pelican's HTML output. I also plan to use my
-[markdown-include](https://github.com/cmacmackin/markdown-include). A Pelican
-template can be written such that the output will look appropriate for
-scientific notes.
-
-Scribbler will consist largely as a wrapper for running Pelican with the
-necessary plugins and then creating PDFs from the HTML output. It will read
-its settings from a YAML file. It will
-also provide a command to quickly copy a file into your notes.
-
-## Things I will use:
-- [Pelican](https://github.com/getpelican/pelican)
-- [MarkdownSuperscript](https://pypi.python.org/pypi/MarkdownSuperscript)/[MarkdownSubscript](https://pypi.python.org/pypi/MarkdownSuperscript)
-- [mdx_del_ins](https://pypi.python.org/pypi/mdx_del_ins)
-- [markdown-checklist](https://github.com/FND/markdown-checklist)
-- [markdown.highlight](https://github.com/ribalba/markdown.highlight)
-- [figureAltCaption](https://github.com/jdittrich/figureAltCaption), perhaps as
-  a base from which to build my own plugin for creating and referencing figures?
-- [render_math](https://github.com/getpelican/pelican-plugins/tree/master/render_math)
