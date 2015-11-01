@@ -63,13 +63,9 @@ class Notebook(object):
         'language': 'en',
         'links': [],
         'email': '',
-        'description': 'This provides a description of your notebook. Talk '
-                       'about what\'s in it, maybe providing a summary. '
-                       'You might also want to write a bit about the '
-                       'author. Don\'t give any contact details about the '
-                       'author here, though. Those are provided elsewhere.',
+        'description': '',
         'address': False,
-        'street address': '',
+        'street address' : '',
         'city': '',
         'region': '',
         'postal': '',
@@ -118,15 +114,15 @@ class Notebook(object):
         'pdf': 'pdfs',
         'ps': 'pdfs',
         'dvi': 'pdfs',
-        'tar.gz': 'tarballs',
-        'tar.bz': 'tarballs',
-        'tar.bz2': 'tarballs',
-        'tar.xz': 'tarballs',
-        'tar': 'tarballs',
-        'rar': 'tarballs',
-        'zip': 'tarballs',
-        'rtp': 'tarballs',
-        'deb': 'tarballs',
+        'tar.gz': 'archives',
+        'tar.bz': 'archives',
+        'tar.bz2': 'archives',
+        'tar.xz': 'archives',
+        'tar': 'archives',
+        'rar': 'archives',
+        'zip': 'archives',
+        'rtp': 'archives',
+        'deb': 'archives',
         '*': 'attachments'
     }   
     DEFAULT_PELICAN_SETTINGS = {
@@ -280,6 +276,8 @@ class Notebook(object):
         """
         if os.path.isfile(os.path.join(self.location, self.PELICANCONF_FILE)):
             os.remove(os.path.join(self.location, self.PELICANCONF_FILE))
+            if os.path.isfile(os.path.join(self.location, self.PELICANCONF_FILE+'c')):
+                os.remove(os.path.join(self.location, self.PELICANCONF_FILE+'c'))
             return True
         else:
             return False
@@ -511,6 +509,7 @@ class Notebook(object):
                         os.path.join(content, self.APPE_DIR))
         shutil.copytree(os.path.join(self.location, self.STATIC_DIR),
                         os.path.join(content, self.STATIC_DIR))
+        print('Producing HTML files...')
         subprocess.call(['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)])
         self.del_pelicanconf()
         self.update()
