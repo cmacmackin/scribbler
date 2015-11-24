@@ -12,7 +12,9 @@
 
 {% block content %}
 {{ headline(article,SITEURL,True) }}
-{{ article.content }}
+<div class="content">
+    {{ article.content }}
+</div>
 <div class="hide-for-print">
     {% if article.prev_article %}
     <a href="{{ SITEURL }}/{{ article.prev_article.url }}" class="pager left">&laquo; Previous</a>

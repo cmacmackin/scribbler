@@ -559,16 +559,17 @@ welcome.
 ## To Do
 - [ ] Creade a Markdown plugin which allows references to tables and code
 	  blocks?
-- [ ] Add option to force recreation of some or all PDF files
+- [ ] Add option to force re-creation of some or all PDF files
 - [ ] Add a default to the `src`, `html`, and `pdf` commands that opens
       notes for today.
 - [ ] Provide a way to rename and/or relocate an existing notebook
 - [ ] Send the output of the `list` command to a pager
 - [x] Write better documentation
-- [ ] Reduce the font size
+- [x] Reduce the font size
 - [ ] Create a command to delete notes/appendices
 - [ ] Create command to open `index.html` and `FullNotebook.pdf`
 - [ ] Make MathJax scripts local so they can be used faster
-- [ ] Change CSS so that `pre` content is line-wrapped when printed
+- [x] Change CSS so that `pre` content is line-wrapped when printed
 - [ ] Initialize markdown-include so that paths evaluated relative to notebook base
+- [x] Prevent page breaks after headlines
 

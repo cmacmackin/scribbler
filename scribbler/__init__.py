@@ -284,7 +284,7 @@ def new(date, title, markup, note):
                    'Default: no-overwrite.')
 @click.option('--note/--appendix', default=True,
               help='Whether to create a note or an appendix. Default: note.')
-def add(path, title, overwrite, note):
+def add(path, title, date, overwrite, note):
     check_if_loaded(cur_notebook)
     try:
         if note:
@@ -305,9 +305,9 @@ def add(path, title, overwrite, note):
 @click.option('--note/--appendix', default=True,
               help='Whether searches for a note or an appendix '
                    'matching IDENT. Default: note.')
-def src(ident, date, notes):
+def src(ident, date, note):
     check_if_loaded(cur_notebook)
-    note_files = note_from_ident(ident, date, notes)
+    note_files = note_from_ident(ident, date, note)
     if len(note_files) == 0:
         click.echo('No matches found.')
         sys.exit(1)
@@ -426,11 +426,11 @@ def add_file(method, src, dest, nb=cur_notebook, force=False):
         return os.path.join(os.path.dirname(nb.get_destination(src, dest)), newname)
 
     try:
-        method(nb, src, dest, force)
+        method(src, dest, force)
     except OSError:
         if click.confirm('Placing this file in the notebook would '
                          'overwrite an existing file. Continue?'):
-            method(nb, src, dest, True)
+            method(src, dest, True)
         else:
             newname = os.path.basename(nb.get_destination(src, dest))
             fname, ext = os.path.splitext(newname)

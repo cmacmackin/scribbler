@@ -129,7 +129,9 @@ class Notebook(object):
         'DELETE_OUTPUT_DIRECTORY': True,
         'OUTPUT_PATH': HTML_DIR,
         'PATH': CONTENT_DIR,
-        'PAGE_PATHS': ["appendices"],
+        'ARTICLE_PATHS': [NOTE_DIR],
+        'PAGE_PATHS': [APPE_DIR],
+        'STATIC_PATHS': [STATIC_DIR],
         'RELATIVE_URLS': True,
         'THEME': os.path.normpath(os.path.join(os.path.dirname(__file__), 'notebook-theme')),
         'DIRECT_TEMPLATES':  ['index', 'archives', 'tags', 'search'],
@@ -159,7 +161,7 @@ class Notebook(object):
         #~ 'margin-left': '0.0in',
         'quiet': '',
         'print-media-type': '',
-        'javascript-delay': '2500',
+        'javascript-delay': '5000',
     }
     
     def __init__(self, name, location):
@@ -355,7 +357,7 @@ class Notebook(object):
                 raise OSError("File already exists at '{}'".format(dest))
         self.mkdirs(dest)
         os.link(path, dest)
-    
+
     def symlink_in(self, path, location=None, overwrite=False):
         """
         Create symbolic link in the notebook contents to the file at the
@@ -377,10 +379,10 @@ class Notebook(object):
             rpath = path
         else:
             if dest.endswith(os.path.sep):
-                rpath = os.path.relpath(path, dest[:len(os.path.sep)])
+                rpath = os.path.relpath(os.path.abspath(path), dest[:len(os.path.sep)])
             else:
-                rpath = os.path.relpath(path, dest)
-        os.link(rpath, dest)
+                rpath = os.path.relpath(os.path.abspath(path), os.path.dirname(dest))
+        os.symlink(rpath, dest)
     
     def newnote(self, date, title, markup='md'):
         """
@@ -511,9 +513,9 @@ class Notebook(object):
                         os.path.join(content, self.STATIC_DIR))
         print('Producing HTML files...')
         subprocess.call(['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)])
-        self.del_pelicanconf()
+        #~ self.del_pelicanconf()
         self.update()
-        shutil.rmtree(content)
+        #~ shutil.rmtree(content)
         print('Producing PDF files...')
         if not os.path.isdir(os.path.join(self.location, self.PDF_DIR)):
             os.mkdir(os.path.join(self.location, self.PDF_DIR))
