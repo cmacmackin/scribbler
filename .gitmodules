@@ -10,6 +10,3 @@
 [submodule "scribbler/pdf-img"]
 	path = scribbler/pdf-img
 	url = https://github.com/cmacmackin/pdf-img.git
-[submodule "scribbler/notebook-theme/static/js/MathJax"]
-	path = scribbler/notebook-theme/static/js/MathJax
-	url = https://github.com/mathjax/MathJax.git
