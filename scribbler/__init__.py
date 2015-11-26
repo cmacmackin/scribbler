@@ -48,7 +48,7 @@ __author__     = "Chris MacMackin"
 __maintainer__ = "Chris MacMackin"
 __license__    = "GPLv3"
 __status__     = "Beta"
-__version__    = '0.2.0'
+__version__    = '0.3.0'
 
 dt = datetime.datetime.now()
 scribbler = ScribblerDatabase(click.get_app_dir(__appname__))
@@ -237,12 +237,18 @@ def notebooks():
     
 @cli.command(help='Creates the HTML and PDF output of the currently '
                   'loaded notebook.')
-def build():
+@click.option('--debug/--no-debug', default=False,
+              help='Display backtrace of error occurs during build '
+                   'process. Default: --no-debug')
+def build(debug):
     check_if_loaded(cur_notebook)
-    try:
-        cur_notebook.build()
-    except ScribblerError as e:
-        click.echo(ERROR + str(e))
+    if debug:
+        cur_notebook.build(debug=True)
+    else:
+        try:
+            cur_notebook.build()
+        except ScribblerError as e:
+            click.echo(ERROR + str(e))
     scribbler.save(cur_notebook)
 
 
@@ -276,8 +282,8 @@ def new(date, title, markup, note):
 @click.argument('path', type=click.Path(exists=True))
 @click.option('--title', '-t', default=dt.strftime('%A'),
               help='Title of the note/appendix. Default: current day of week.')
-@click.option('--date', '-d', default=dt.strftime('%Y-%m-%d %H:%M'),
-              help='Date to use for the new note, in format "YYYY-MM-DD HH:mm". '
+@click.option('--date', '-d', default=dt.strftime('%Y-%m-%d'),
+              help='Date to use for the new note, in format "YYYY-MM-DD". '
                    'Default: today\'s date.')
 @click.option('--overwrite/--no-overwrite', default=False,
               help='Overwrite an existing record for this file. '

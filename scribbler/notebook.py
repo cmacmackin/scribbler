@@ -496,10 +496,10 @@ class Notebook(object):
         """
         raise NotImplementedError() #TODO: Add this feature
 
-    def build(self):
+    def build(self, debug=False):
         """
         Run Pelican to produce the HTML for this notebook. Then produce
-        the PDF pages.
+        the PDF pages. Passes `--debug` flag to Pelican if DEBUG is true.
         """
         self.make_pelicanconf()
         content = os.path.join(self.location, self.CONTENT_DIR)
@@ -512,7 +512,10 @@ class Notebook(object):
         shutil.copytree(os.path.join(self.location, self.STATIC_DIR),
                         os.path.join(content, self.STATIC_DIR))
         print('Producing HTML files...')
-        subprocess.call(['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)])
+        call = ['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)]
+        if debug:
+            call.append('--debug')
+        subprocess.call(call)
         #~ self.del_pelicanconf()
         self.update()
         #~ shutil.rmtree(content)
@@ -553,7 +556,8 @@ class Notebook(object):
                     self.notes[f].update()
                     del notes[f]
                 else:
-                    if f.endswith('~'): continue
+                    if f.endswith('~') or f.startswith('.') or f.startswith('#'):
+                        continue
                     path = os.path.join(os.path.relpath(root, self.location), f)
                     self.notes[f] = ScribblerContent('Unknown', '????-??-??',
                                                      path, self)
@@ -566,7 +570,8 @@ class Notebook(object):
                     self.appendices[f].update()
                     del appen[f]
                 else:
-                    if f.endswith('~'): continue
+                    if f.endswith('~') or f.startswith('.') or f.startswith('#'):
+                        continue
                     path = os.path.join(os.path.relpath(root, self.location), f)
                     self.appendices[f] = ScribblerContent('Unknown', '????-??-??',
                                                           path, self)
