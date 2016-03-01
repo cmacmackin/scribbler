@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 venv/
 test-notes/
+venvpy3/
 
 # C extensions
 *.so

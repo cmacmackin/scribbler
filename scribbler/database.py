@@ -143,7 +143,7 @@ class ScribblerDatabase(object):
         Returns the currently loaded notebook. If no notebook loaded, returns None.
         """
         try:
-            infile = open(os.path.join(self.scribbler_dir,self.LOADED_NAME),'r')
+            infile = open(os.path.join(self.scribbler_dir,self.LOADED_NAME),'rb')
         except IOError:
             return None
         nb = load(infile)

@@ -3,6 +3,7 @@ from codecs import open  # To use a consistent encoding
 from os import path
 
 here = path.abspath(path.dirname(__file__))
+__version__ = '0.2.0'
 
 # Get the long description from the relevant file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
@@ -12,7 +13,7 @@ setup(
   name = 'scribbler',
   packages = ['scribbler'],
   include_package_data = True,
-  version = 0.2.0,
+  version = __version__,
   description = 'Scribbler (a Canadian term for a workbook) is a wrapper for Pelican which integrates various plugins to provide scientific note-taking software.',
   long_description = long_description,
   author = 'Chris MacMackin',
@@ -42,14 +43,15 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        #'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3',
         #'Programming Language :: Python :: 3.3',
-        #'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.4',
     ],
     install_requires = ['pelican','MarkdownSuperscript','MarkdownSubscript',
                         'mdx_del_ins','BeautifulSoup4','markdown-checklist',
                         'MarkdownHighlight','markdown-include','PyYAML',
-                        'pyPDF2', 'markdown', 'typogrify', 'Wand', 'pybtex'],
+                        'pyPDF2', 'markdown', 'typogrify', 'Wand', 'pybtex',
+                        'click', 'pdfkit'],
   entry_points = {
     'console_scripts': [
         'scribbler=scribbler:cli',
