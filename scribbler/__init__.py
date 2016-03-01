@@ -42,6 +42,7 @@ import click
 from .database import ScribblerDatabase
 from .notebook import Notebook
 from .errors import ScribblerWarning, ScribblerError
+from PyPDF2.utils import PdfReadWarning
 
 __appname__    = "scribbler"
 __author__     = "Chris MacMackin"
@@ -70,6 +71,7 @@ def check_if_loaded(notebook):
 @click.version_option(version=__version__)
 def cli():
     warnings.simplefilter('always', ScribblerWarning)
+    warnings.simplefilter('ignore', PdfReadWarning)
 
 
 @cli.command(help='Copies SRC to the appropriate location within the '

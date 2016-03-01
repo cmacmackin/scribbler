@@ -522,7 +522,7 @@ class Notebook(object):
         print('Producing PDF files...')
         if not os.path.isdir(os.path.join(self.location, self.PDF_DIR)):
             os.mkdir(os.path.join(self.location, self.PDF_DIR))
-        master = PdfFileMerger()
+        master = PdfFileMerger(strict=False)
         master.addMetadata({u'/Title': self.settings['notebook name'],
                             u'/Author': self.settings['author']})
         src = os.path.join(self.location, self.HTML_DIR, 'index.html')
