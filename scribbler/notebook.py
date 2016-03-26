@@ -103,7 +103,8 @@ class Notebook(object):
                         'markdown_checklist.extension','extra',
                         'subscript','MarkdownHighlight.highlight',
                         'codehilite(css_class=highlight)','del_ins',
-                        'markdown_include.include(base_path={})']
+                        'markdown_include.include(base_path={})',
+                        'scribbler.plantuml']
     FILETYPES = {
         'jpg': 'images',
         'jpeg': 'images',
