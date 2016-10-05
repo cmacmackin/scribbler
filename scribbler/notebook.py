@@ -152,6 +152,8 @@ class Notebook(object):
         'AUTHOR_FEED_RSS': None,
         'SITEURL': 'http://www.null.org',
         'MATH_JAX': {'message_style': 'none'},
+        'CACHE_CONTENT': True,
+        'CACHE_PATH': '.__cache__',
         #~ 'MONTH_ARCHIVE_SAVE_AS': '{date:%Y}/{date:%b}/index.html',
         #~ 'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
     }
@@ -504,13 +506,13 @@ class Notebook(object):
         """
         self.make_pelicanconf()
         content = os.path.join(self.location, self.CONTENT_DIR)
-        if os.path.isdir(content): shutil.rmtree(content)
-        os.mkdir(content)
-        shutil.copytree(os.path.join(self.location, self.NOTE_DIR), 
-                        os.path.join(content, self.NOTE_DIR))
-        shutil.copytree(os.path.join(self.location, self.APPE_DIR),
-                        os.path.join(content, self.APPE_DIR))
-        shutil.copytree(os.path.join(self.location, self.STATIC_DIR),
+        if not os.path.isdir(content):
+            os.mkdir(content)
+            os.symlink(os.path.join(self.location, self.NOTE_DIR), 
+                       os.path.join(content, self.NOTE_DIR))
+            os.symlink(os.path.join(self.location, self.APPE_DIR),
+                       os.path.join(content, self.APPE_DIR))
+            os.symlink(os.path.join(self.location, self.STATIC_DIR),
                         os.path.join(content, self.STATIC_DIR))
         print('Producing HTML files...')
         call = ['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)]
