@@ -185,18 +185,16 @@ def addnote_test(addnote):
         addnote.assert_called_with(d.strftime('%Y-%m-%d %H:%M'), d.strftime('%A'), p, True)
 
 
-@patch('scribbler.database.ScribblerDatabase.save')
 @patch('scribbler.notebook.Notebook.build')
 @patch('scribbler.check_if_loaded', lambda x: None)
-def build_test(build, save):
+def build_test(build):
     """
     Tests building of notebook using `scribbler build`.
     """
     runner = CliRunner()
     result = runner.invoke(scr.cli, ['build'])
     build.assert_called_with()
-    save.assert_called_with(scr.cur_notebook)
-    
+
 @patch('scribbler.database.ScribblerDatabase.unload')
 def unload_test(unload):
     """

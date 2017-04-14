@@ -2,24 +2,24 @@
 # -*- coding: utf-8 -*-
 #
 #  notebook.py
-#  
+#
 #  Copyright 2014 Christopher MacMackin <cmacmackin@gmail.com>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
+#
 #
 
 """
@@ -44,11 +44,11 @@ from .content import ScribblerContent
 
 class Notebook(object):
     """
-    A class describing and managing a Scribbler notebook. 
+    A class describing and managing a Scribbler notebook.
     """
     CONTENT_DIR = '.__content__'
     SETTINGS_FILE = 'notebook.yml'
-    BACKUP_FILE = '.__notebook__.pkl'
+    STORAGE_FILE = '.__notebook__.pkl'
     PELICANCONF_FILE = '.__pelicanconf__.py'
     NOTE_DIR = 'notes'
     APPE_DIR = 'appendices'
@@ -125,7 +125,7 @@ class Notebook(object):
         'rtp': 'archives',
         'deb': 'archives',
         '*': 'attachments'
-    }   
+    }
     DEFAULT_PELICAN_SETTINGS = {
         'DELETE_OUTPUT_DIRECTORY': True,
         'OUTPUT_PATH': HTML_DIR,
@@ -144,7 +144,7 @@ class Notebook(object):
         'AUTHOR_SAVE_AS': '',
         'CATEGORY_SAVE_AS': '',
         'ARTICLE_URL': NOTE_DIR + '/{slug}.html',
-        'ARTICLE_SAVE_AS': NOTE_DIR + '/{slug}.html',	
+        'ARTICLE_SAVE_AS': NOTE_DIR + '/{slug}.html',
         'SLUGIFY_SOURCE': 'basename',
         'FEED_ALL_ATOM': None,
         'CATEGORY_FEED_ATOM': None,
@@ -158,22 +158,22 @@ class Notebook(object):
         #~ 'YEAR_ARCHIVE_SAVE_AS': '{date:%Y}/index.html',
     }
     PDF_SETTINGS = {
-        #~ 'margin-top': '0.9in',
-        #~ 'margin-right': '0.0in',
-        #~ 'margin-bottom': '0.9in',
-        #~ 'margin-left': '0.0in',
+        'margin-top': '0.7in',
+        'margin-right': '0.7in',
+        'margin-bottom': '0.7in',
+        'margin-left': '0.7in',
         'quiet': '',
         'print-media-type': '',
         'javascript-delay': '5000',
     }
-    
+
     def __init__(self, name, location):
         """
         If location already exists, then try to read notebook
-        information from its contents. This may override name. 
+        information from its contents. This may override name.
         Otherwise, create basic contents for a notebook at location.
         """
-        subdirs = [os.path.join(location, d) for d in 
+        subdirs = [os.path.join(location, d) for d in
                     [Notebook.APPE_DIR, Notebook.HTML_DIR, Notebook.PDF_DIR,
                      Notebook.NOTE_DIR, Notebook.STATIC_DIR]
                   ]
@@ -192,7 +192,7 @@ class Notebook(object):
                 pass
         #~ self.output_path = os.path.join(location,'html')
         #~ self.content_path = os.path.join(location,'content')
-    
+
     def __eq__(self, other):
         """
         Equality test, needed for unit testing.
@@ -201,11 +201,11 @@ class Notebook(object):
             return self.__dict__ == other.__dict__
         except AttributeError:
             return False
-    
+
     @property
     def settings(self):
         '''
-        Takes the YAML file containing settings for this notebook and 
+        Takes the YAML file containing settings for this notebook and
         returns a dictionary constructed by adjusting the  default
         settings with this information.
         '''
@@ -232,7 +232,7 @@ class Notebook(object):
         self._settings = settings
         self.settings_mod_time = yaml_time
         return settings
-    
+
     @property
     def pelican_settings(self):
         '''
@@ -252,7 +252,7 @@ class Notebook(object):
         self._pelican_settings = psettings
         self.psettings_mod_time = self.settings_mod_time
         return psettings
-    
+
     @property
     def pdf_settings(self):
         """
@@ -261,7 +261,11 @@ class Notebook(object):
         settings = copy(self.PDF_SETTINGS)
         settings['page-size'] = self.settings['paper']
         return settings
-    
+
+    @property
+    def storage_file(self):
+        return os.path.join(self.location, self.STORAGE_FILE)
+
     def make_pelicanconf(self):
         """
         Create .pelicanconf.py from the notebook settings.
@@ -273,7 +277,7 @@ class Notebook(object):
         for key, val in self.pelican_settings.iteritems():
             pfile.write('{} = {}\n'.format(key, repr(val)))
         pfile.close()
-    
+
     def del_pelicanconf(self):
         """
         Delete pelicanconf file if exists. Returns True if did exist,
@@ -286,7 +290,7 @@ class Notebook(object):
             return True
         else:
             return False
-    
+
     @staticmethod
     def mkdirs(path):
         """
@@ -296,7 +300,7 @@ class Notebook(object):
             os.makedirs(os.path.dirname(path))
         except:
             pass
-    
+
     def get_destination(self, path, location=None):
         """
         Returns the location in which to place the file.
@@ -323,7 +327,7 @@ class Notebook(object):
                                          'type of file ' + filename)
             loc = os.path.join(loc, filename)
         return os.path.join(self.location, self.STATIC_DIR, loc)
-    
+
     def copy_in(self, path, location=None, overwrite=False):
         """
         Copy the file at the specified path into the notebook contents
@@ -343,10 +347,10 @@ class Notebook(object):
             shutil.copytree(path, dest)
         else:
             shutil.copy(path, dest)
-    
+
     def link_in(self, path, location=None, overwrite=False):
         """
-        Create hard link in the notebook contents to the file at the 
+        Create hard link in the notebook contents to the file at the
         specified path. If location is specified, place link there.
         Otherwise, place in default locations for that filetype.
         """
@@ -386,7 +390,7 @@ class Notebook(object):
             else:
                 rpath = os.path.relpath(os.path.abspath(path), os.path.dirname(dest))
         os.symlink(rpath, dest)
-    
+
     def newnote(self, date, title, markup='md'):
         """
         Create a new note with the specified date and title. Returns the
@@ -422,12 +426,12 @@ class Notebook(object):
             out.close()
             os.remove(path)
             raise e
-        self.notes[basename] = ScribblerContent(title, date[0:10], 
+        self.notes[basename] = ScribblerContent(title, date[0:10],
                                                 os.path.join(self.NOTE_DIR, basename),
                                                 self)
-        self.save(os.path.join(self.location, self.BACKUP_FILE))
+        self.save(self.storage_file)
         return path
-    
+
     def newpage(self, title, markup='md'):
         """
         Create a new page ("appendix") with the specified title. Returns
@@ -456,12 +460,12 @@ class Notebook(object):
             out.close()
             os.remove(path)
             raise e
-        self.appendices[basename] = ScribblerContent(title, '????-??-??', 
-                                                     os.path.join(self.APPE_DIR, 
+        self.appendices[basename] = ScribblerContent(title, '????-??-??',
+                                                     os.path.join(self.APPE_DIR,
                                                      basename), self)
-        self.save(os.path.join(self.location, self.BACKUP_FILE))
+        self.save(self.storage_file)
         return path
-    
+
     def addnote(self, date, title, path, overwrite=False):
         """
         Add a record of a note in an existing file (PATH), not previously
@@ -477,8 +481,8 @@ class Notebook(object):
             raise ScribblerError('Note with file `{}` already exists.'.format(basename))
         self.notes[basename] = ScribblerContent(title, date,
                                     os.path.join(self.NOTE_DIR, basename), self)
-        self.save(os.path.join(self.location, self.BACKUP_FILE))
-        
+        self.save(self.storage_file)
+
     def addpage(self, title, path, overwrite=False):
         """
         Add a record of a page/appendix in an existing file (PATH), not
@@ -489,8 +493,8 @@ class Notebook(object):
             raise ScribblerError('Note with file `{}` already exists.'.format(basename))
         self.appendices[basename] = ScribblerContent(title, '????-??-??',
                                         os.path.join(self.APPE_DIR, basename), self)
-        self.save(os.path.join(self.location, self.BACKUP_FILE))
-        
+        self.save(self.storage_file)
+
     def list_contents(self):
         """
         Return a list (format to be determined) detailing the notes,
@@ -508,12 +512,12 @@ class Notebook(object):
         content = os.path.join(self.location, self.CONTENT_DIR)
         if not os.path.isdir(content):
             os.mkdir(content)
-            os.symlink(os.path.join(self.location, self.NOTE_DIR), 
+            os.symlink(os.path.join(self.location, self.NOTE_DIR),
                        os.path.join(content, self.NOTE_DIR))
             os.symlink(os.path.join(self.location, self.APPE_DIR),
                        os.path.join(content, self.APPE_DIR))
             os.symlink(os.path.join(self.location, self.STATIC_DIR),
-                        os.path.join(content, self.STATIC_DIR))
+                       os.path.join(content, self.STATIC_DIR))
         print('Producing HTML files...')
         call = ['pelican','-s',os.path.join(self.location,self.PELICANCONF_FILE)]
         if debug:
@@ -580,7 +584,7 @@ class Notebook(object):
                                                           path, self)
         for a in appen:
             del self.appendices[a]
-        self.save(os.path.join(self.location, self.BACKUP_FILE))
+        self.save(self.storage_file)
 
     def save(self, path):
         """
@@ -603,7 +607,7 @@ def create_notebook(name, location):
                 f.write("# Notebook configuration file\n")
                 f.write("notebook name: {}".format(name))
         try:
-            infile = open(os.path.join(location, Notebook.BACKUP_FILE), 'r')
+            infile = open(os.path.join(location, Notebook.STORAGE_FILE), 'r')
             nb = load(infile)
             nb.location = os.path.abspath(location)
         except:
@@ -615,5 +619,5 @@ def create_notebook(name, location):
             f.write("# Notebook configuration file\n")
             f.write("notebook name: {}".format(name))
         nb = Notebook(name, location)
-    nb.save(os.path.join(location, nb.BACKUP_FILE))
+    nb.save(nb.storage_file)
     return nb

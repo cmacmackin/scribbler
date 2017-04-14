@@ -51,7 +51,7 @@ setup(
                         'mdx_del_ins','BeautifulSoup4','markdown-checklist',
                         'MarkdownHighlight','markdown-include','PyYAML',
                         'pyPDF2', 'markdown', 'typogrify', 'Wand',
-                        'pybtex==0.19', 'click', 'pdfkit'],
+                        'pybtex==0.18', 'click', 'pdfkit'],
   entry_points = {
     'console_scripts': [
         'scribbler=scribbler:cli',

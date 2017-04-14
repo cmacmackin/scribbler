@@ -289,13 +289,4 @@ def current_test():
     """
     assert db.current() == None
 
-@patch('scribbler.database.ScribblerDatabase.name_to_filename', mock_to_filename)
-def save_test():
-    """
-    Checks ScribblerDatabase.save() calls the methods it should.
-    """
-    nb = MagicMock()
-    nb.name = 'Magic Notebook'
-    db.save(nb)
-    nb.save.assert_called_with(os.path.join(db.scribbler_dir, mock_to_filename(1, 1)))
 

@@ -2,25 +2,25 @@
 # -*- coding: utf-8 -*-
 #
 #  __init__.py
-#  
+#
 #  Copyright 2014 Christopher MacMackin <cmacmackin@gmail.com>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 
 """
 Scribbler
@@ -44,18 +44,19 @@ from .notebook import Notebook
 from .errors import ScribblerWarning, ScribblerError
 from PyPDF2.utils import PdfReadWarning
 
-__appname__    = "scribbler"
-__author__     = "Chris MacMackin"
+__appname__ = "scribbler"
+__author__ = "Chris MacMackin"
 __maintainer__ = "Chris MacMackin"
-__license__    = "GPLv3"
-__status__     = "Beta"
-__version__    = '0.3.0'
+__license__ = "GPLv3"
+__status__ = "Beta"
+__version__ = '0.3.0'
 
 dt = datetime.datetime.now()
 scribbler = ScribblerDatabase(click.get_app_dir(__appname__))
 cur_notebook = scribbler.current()
 
 ERROR = click.style('ERROR: ', fg='red', bold=True)
+
 
 def check_if_loaded(notebook):
     """
@@ -251,7 +252,6 @@ def build(debug):
             cur_notebook.build()
         except ScribblerError as e:
             click.echo(ERROR + str(e))
-    scribbler.save(cur_notebook)
 
 
 @cli.command(help='Creates a new note or appendix in the currently '
@@ -275,7 +275,6 @@ def new(date, title, markup, note):
     except ScribblerError as e:
         click.echo(ERROR + str(e))
         sys.exit(1)
-    scribbler.save(cur_notebook)
     click.launch(path)
 
 
@@ -302,7 +301,6 @@ def add(path, title, date, overwrite, note):
     except ScribblerError as e:
         click.echo(ERROR + str(e))
         sys.exit(1)
-    scribbler.save(cur_notebook)
 
 
 @cli.command(help='Opens the source file(s) for note(s) with date or '

@@ -365,7 +365,7 @@ def list_test():
     """
     nb.list_contents()
 
-@raises(ValueError)
+@raises(ScribblerError)
 def newnote_bad_date_test():
     """
     Tests that Notebook.newnote() fails if not given a date of format YYYY-MM-DD HH:mm
@@ -525,17 +525,17 @@ def create_existing_test():
     Tests create_notebook() using a notebook in an existing directory.
     """
     testnb = create_notebook('test notebook', 'test_notebook')
-    infile = open(os.path.join('test_notebook', nb.BACKUP_FILE), 'r')
+    infile = open(os.path.join('test_notebook', nb.STORAGE_FILE), 'r')
     reloaded = load(infile)
     print testnb.__dict__
     print reloaded.__dict__
     assert testnb == reloaded
 
 def setup_build():
-    shutil.move(os.path.join('test_notebook', nb.BACKUP_FILE), 'backup.pkl')
+    shutil.move(os.path.join('test_notebook', nb.STORAGE_FILE), 'backup.pkl')
 
 def teardown_build():
-    shutil.move('backup.pkl', os.path.join('test_notebook', nb.BACKUP_FILE))
+    shutil.move('backup.pkl', os.path.join('test_notebook', nb.STORAGE_FILE))
     shutil.rmtree('test_notebook/pdf')
     os.mkdir('test_notebook/pdf')
     shutil.rmtree('test_notebook/html')
@@ -594,7 +594,7 @@ def add_note_test(add):
     testnb.addnote('2015-10-27', 'Test 2', 'test_notebook/notes/test.md', True)
     add.assert_called_with('Test 2', '2015-10-27', 'test.md', testnb)
 
-@raises(ValueError)
+@raises(ScribblerError)
 def add_note_bad_date_test():
     """
     Checks error raised when malformed date passed to Notebook.add_note(). 

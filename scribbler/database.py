@@ -2,24 +2,24 @@
 # -*- coding: utf-8 -*-
 #
 #  database.py
-#  
+#
 #  Copyright 2014 Christopher MacMackin <cmacmackin@gmail.com>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
+#
 #
 
 """
@@ -44,14 +44,14 @@ class ScribblerDatabase(object):
     Scribbler and about which notebook is currently loaded. Loads this
     from the information contained within data_dir.
     """
-    
+
     LOADED_NAME = '__loaded__.pkl'
-    
+
     def __init__(self, data_dir):
         self.scribbler_dir = data_dir
         if not os.path.isdir(self.scribbler_dir):
             os.makedirs(self.scribbler_dir)
-    
+
     @staticmethod
     def name_to_filename(name):
         """
@@ -60,9 +60,9 @@ class ScribblerDatabase(object):
         """
         #~ name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore')
         #~ name = unicode(re.sub('[^\w\s-]', '', name).strip().lower())
-        #~ name = re.sub('[-\s]+', '-', name) 
+        #~ name = re.sub('[-\s]+', '-', name)
         return slugify(name) + '.pkl'
-    
+
     def get(self, name):
         """
         Get the notebook object corresponding to the provided name.
@@ -74,7 +74,7 @@ class ScribblerDatabase(object):
             raise ScribblerError('No notebook with name `{}`'.format(name))
         nb = load(infile)
         return nb
-    
+
     def add(self, name, location):
         """
         Create a new notebook with the given name, in the given location
@@ -86,13 +86,13 @@ class ScribblerDatabase(object):
             if self.name_to_filename(nb.name) == self.name_to_filename(name):
                 raise ScribblerError('Name `{}` too similar to that of existing notebook `{}`'.format(name, nb.name))
             if os.path.isdir(location) and os.path.samefile(nb.location, location):
-                raise ScribblerError('Notebook `{}` already exists at location {}'.format(nb.name, location)) 
+                raise ScribblerError('Notebook `{}` already exists at location {}'.format(nb.name, location))
         if os.path.isfile(location):
             raise ScribblerError('Location {} exists but is not a directory'.format(location))
         nb = create_notebook(name, location)
         nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(name))
-        nb.save(nb_file)
-    
+        os.symlink(nb.storage_file, nb_file)
+
     def delete(self, name, del_files=False):
         """
         Remove records of the named notebook. Also remove the files
@@ -108,7 +108,7 @@ class ScribblerDatabase(object):
             except:
                 warnings.warn('Error occurred while removing files for '
                               'notebook `{}`'.format(name), ScribblerWarning)
-    
+
     def load(self, name):
         """
         Loads the notebook with the provided name.
@@ -119,7 +119,7 @@ class ScribblerDatabase(object):
             os.symlink(srcfile, os.path.join(self.scribbler_dir, self.LOADED_NAME))
         else:
             raise ScribblerError('No notebook with name `{}`'.format(name))
-    
+
     def unload(self):
         """
         Unloads any currently loaded notebooks.
@@ -128,16 +128,16 @@ class ScribblerDatabase(object):
             os.remove(os.path.join(self.scribbler_dir, self.LOADED_NAME))
         except OSError:
             pass
-        
+
     def is_current(self, name):
         """
         Tests if notebook NAME is the one currently loaded.
         """
         curpath = os.path.join(self.scribbler_dir, self.LOADED_NAME)
         namepath = os.path.join(self.scribbler_dir, self.name_to_filename(name))
-        return (os.path.islink(curpath) and 
+        return (os.path.islink(curpath) and
                 os.path.realpath(curpath) == os.path.realpath(namepath))
-    
+
     def current(self):
         """
         Returns the currently loaded notebook. If no notebook loaded, returns None.
@@ -148,14 +148,14 @@ class ScribblerDatabase(object):
             return None
         nb = load(infile)
         return nb
-    
-    def save(self, nb):
-        """
-        Saves the notebook NB to the scribbler directory.
-        """
-        nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(nb.name))
-        nb.save(nb_file)
-    
+
+#    def save(self, nb):
+#        """
+#        Saves the notebook NB to the scribbler directory.
+#        """
+#        nb_file = os.path.join(self.scribbler_dir, self.name_to_filename(nb.name))
+#        nb.save(nb_file)
+
     def __iter__(self):
         """
         Returns an iterable of the notebooks in the database.
@@ -165,5 +165,5 @@ class ScribblerDatabase(object):
         nb_list = []
         for f in files:
             with open(f,'r') as r:
-                nb_list.append(load(r))        
+                nb_list.append(load(r))
         return iter(nb_list)
